@@ -138,4 +138,23 @@ mod.posterior <- function(posterior, truth, prob, dimension = length(train)){
 }
 
 ```
- 
+# Random Forests Classifier 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
+library(randomForest)
+
+
+#set.seed(1)
+
+rf.seismic = randomForest(class~., data = seismic.train, importance = TRUE)
+yhat.rf.train = predict(rf.seismic, newdata = seismic.train)
+mean((yhat.rf - seismic.train)^2)
+
+yhat.rf.test = predict(rf.seismic, newdata = seismic.test)
+mean((yhat.rf - seismic.test)^2)
+
+importance(rf.seismic)
+
+varImpPlot(rf.seismic)
+
+```
