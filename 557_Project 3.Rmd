@@ -158,3 +158,76 @@ importance(rf.seismic)
 varImpPlot(rf.seismic)
 
 ```
+
+# Support vector classifier and support vector machine
+
+```{r}
+
+library(e1071)
+
+# We can modify this by using kernel = radial, which involves changing choice of gamma
+# or by choosing kernel = polynomial, where we can also modify the degree
+# Using a linear kernel is technically a support vector classifier
+
+svmfit <- svm(factor(class)~., data = seismic, cost = .1, kernel = "linear", subset = train)
+tune.out <- tune(svm, class~., data = seismic[train,], kernel = "linear",
+                 ranges = list(cost = c(.001,.01,.1,1,5,10,100)))
+# Look for a best model
+summary(tune.out)
+bestmod <- tune.out$best.model
+summary(bestmod)
+
+ypred <- predict(bestmod, seismic[-train,])
+table(predict = ypred, truth = seismic$class[-train,])
+
+# Get the ROC curve for svm
+library(ROCR)
+
+rocplot <- function(pred, truth, ...){
+  predob <- prediction(pred, truth)
+  perf <- performance(predob, "tpr", "fpr")
+  plot(perf,...)
+}
+
+svmfit.opt <- svm(class~., data = seismic[train,], kernel = "radial",
+                  gamma = 2, cost = 1, decision.values = T)
+fitted <- attributes(predict(svmfit.opt, seismic[train,],
+                             decision.values = T))$decision.values
+
+par(mfrow = c(1,2))
+rocplot(fitted, seismic[train,"class"], main = "Training data")
+
+# Increasing gamma gives a move "flexible" fit
+svmfit.flex <- svm(class~., data = seismic[train,], kernel = "radial",
+                  gamma = 50, cost = 1, decision.values = T)
+fitted.flex <- attributes(predict(svmfit.flex, seismic[train,],
+                             decision.values = T))$decision.values
+rocplot(fitted.flex, seismic[train,"class"], add=T, col="cyan")
+
+# Plot onto test data
+fitted.test1 <- attributes(predict(svmfit.opt, seismic[-train,],
+                             decision.values = T))$decision.values
+rocplot(fitted.test1, seismic[-train,"class"], main = "Test data")
+
+fitted.test2 <- attributes(predict(svmfit.flex, seismic[-train,],
+                                   decision.values = T))$decision.values
+rocplot(fitted.test1, seismic[-train,"class"], add = T, col = "cyan")
+```
+
+# How to time your code!
+
+```{r}
+#-------------------------------------
+# How to time your method
+#-------------------------------------
+
+# Put this before your method
+start.time <- proc.time()
+
+## the thing you are computing, like random forest or SVM goes here ##
+
+total.time <- proc.time() - start.time
+
+total.time[3] # the elapsed time
+
+```
