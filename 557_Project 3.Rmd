@@ -94,18 +94,43 @@ seismic.test <- seismic[test,]
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 library(randomForest)
 
+## Random Forest for Classification Trees 
 
-#set.seed(1)
+seismic$class = as.factor(seismic$class)
+
+set.seed(2016)
+test <- sample(n, round(n/4))
+train <- (1:n)[-test]
+seismic.train <- seismic[train,]
+seismic.test <- seismic[test,]
+
+## RF on Training Data 
 
 rf.seismic = randomForest(class~., data = seismic.train, importance = TRUE)
 yhat.rf.train = predict(rf.seismic, newdata = seismic.train)
-mean((yhat.rf - seismic.train)^2)
+confusion <- table(yhat.rf.train, seismic.train$class)
+sensitivity <- confusion[2,2]/sum(confusion[,2])
+specificity <- confusion[1,1]/sum(confusion[,1])
+#mean((yhat.rf.train - seismic.train$class)^2)
+sensitivity
+specificity
+train.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.train)
+train.accuracy
+
+## RF on Test Data 
 
 yhat.rf.test = predict(rf.seismic, newdata = seismic.test)
-mean((yhat.rf - seismic.test)^2)
+confusion <- table(yhat.rf.test, seismic.test$class)
+sensitivity <- confusion[2,2]/sum(confusion[,2])
+specificity <- confusion[1,1]/sum(confusion[,1])
+#mean((yhat.rf.test - seismic.test$class)^2)
+sensitivity
+specificity
+test.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.test)
+test.accuracy
+
 
 importance(rf.seismic)
-
 varImpPlot(rf.seismic)
 
 ```
