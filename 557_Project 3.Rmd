@@ -36,12 +36,14 @@ In this project, we used the seismic-bumps dataset provided by Sikora & Wróbel 
 
 # Loading packages into R
 library(data.table);library(car);library(lars);library(knitr);library(ISLR);library(leaps);library(glmnet);library(MASS);library(reshape);library(ggplot2);library(pROC)
+#install.packages("klaR")
+#install.packages("gridExtra")
 library(klaR);library(gridExtra)
 
 
 #setwd("~/Box Sync/Skool/Spring 2017/557/Project-2-master")
 #setwd("F:/Penn_State/Spring2017/STAT557/Workspace")
-setwd("/Users/benStraub/Desktop/557/Project-3")
+#setwd("/Users/benStraub/Desktop/557/Project-3")
 seismic <- read.csv("seismic.csv")
 ```
 
@@ -231,6 +233,29 @@ varImpPlot(rf.seismic)
 
 total.time <- proc.time() - start.time
 time7 <- total.time[3] 
+
+
+
+```
+
+
+#boosting
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
+install.packages("gbm")
+library(gbm)
+set.seed (1)
+boost.seismic =gbm(class~.,data=seismic.train, distribution="bernoulli",n.trees =5000, interaction.depth =4)
+summary (boost.seismic)
+
+###marginal effect of the selected variables on the response
+par(mfrow =c(1,2))
+plot(boost.seismic ,i="genergy")
+plot(boost.seismic ,i="energy")
+
+#predict on the test dataset
+#yhat.boost=predict (boost.seismic,newdata =seismic [-train ,],n.trees =5000,type="response")
+#yhat.boost
+
 ```
 
 # Support vector classifier and support vector machine
