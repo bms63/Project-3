@@ -66,26 +66,6 @@ for(i in c(1:3,8)){
   seismic[,i] <- as.numeric(seismic[,i])
 }
 
-fit <- lm(class~., data = seismic)
-
-#for(i in c(4:7,9:15)){
-#  eval(parse(text = paste0("qqnorm(seismic$",names(seismic)[i],")")))
-#  eval(parse(text = paste0("qqline(seismic$",names(seismic)[i],", col = 2)")))
-#}
-
-res <- fit$residuals
-fitvals <- fit$fitted
-plot(fitvals, res, xlab = "Fitted Values", ylab = "Residuals")
-abline(h=0, col = 'red')
-hist(res, xlab = "Residuals", main = "")
-
-par(mfrow=c(2,2))
-
-x <- seismic[c(-1,-2,-3,-8,-14,-15,-16,-19)]
-
-vifs <- round(as.data.frame(t(vif(fit))),2)
-kable(vifs[1:7], caption="VIFs of Linear Model")
-kable(vifs[8:15], caption="VIFs of Linear Model")
 ```
 
 # Classification before Variable Selection 
@@ -107,37 +87,8 @@ train <- (1:n)[-test]
 seismic.train <- seismic[train,]
 seismic.test <- seismic[test,]
 
-#a <-dim(seismic)
-#b <-dim(seismic.train)
-#c <-dim(seismic.test)
-#T <- matrix(c(b,c), nrow=2, dimnames = list(c("Obs", "Varialbes"),c("Training", "Test")))
-#kable(T, caption= "Training and Test Dimensions")
-
-# Function that can help obtain sensitivity, specificity, and overall error rate as threshhold changes
-mod.posterior <- function(posterior, truth, prob, dimension = length(train)){
-  idx0 <- which(posterior[,1] > prob)
-  idx1 <- (1:dimension)[-idx0]
-  
-  prediction <- rep(NA,dimension)
-  prediction[idx0] = 0
-  prediction[idx1] = 1
-  
-  mx <- cbind(prediction,truth,prediction-truth)
-  
-  confusion <- matrix(rep(NA,4), nrow = 2)
-  correct <- which(mx[,3] == 0)
-  confusion[1,1] <- length(which(mx[correct,1] == 0))
-  confusion[2,2] <- length(which(mx[correct,1] == 1))
-  confusion[1,2] <- length(which(mx[,3] == -1))
-  confusion[2,1] <- length(which(mx[,3] == 1))
-  
-  sensitivity <- confusion[2,2]/sum(confusion[,2])
-  specificity <- confusion[1,1]/sum(confusion[,1])
-  error.rate <- (confusion[1,2] + confusion[2,1])/sum(confusion)
-  c(sensitivity, specificity, error.rate)
-}
-
 ```
+
 # Random Forests Classifier 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
