@@ -41,7 +41,7 @@ library(klaR);library(gridExtra)
 
 #setwd("~/Box Sync/Skool/Spring 2017/557/Project-2-master")
 #setwd("F:/Penn_State/Spring2017/STAT557/Workspace")
-setwd("/Users/benStraub/Desktop/557/Project_2")
+setwd("/Users/benStraub/Desktop/557/Project-3")
 seismic <- read.csv("seismic.csv")
 ```
 
@@ -86,6 +86,101 @@ test <- sample(n, round(n/4))
 train <- (1:n)[-test]
 seismic.train <- seismic[train,]
 seismic.test <- seismic[test,]
+
+```
+
+# Logistic Regression
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height = 2.5, fig.width = 3, fig.align='center'}
+
+##--------------------------------------------
+## Logistic Regression  Confusion\Roc
+##--------------------------------------------
+glm.train <- glm(class~., seismic.train, family=binomial)
+#summary(glm.train)
+
+glm.probs=predict(glm.train, type="response")
+glm.pred=rep("0",1938)
+glm.pred[glm.probs >.5]="1"
+
+confusion1 <- table(glm.pred ,seismic.train$class)
+#mean(glm.pred==seismic.train$class)
+
+roc.Train <- roc(seismic.train$class, glm.probs, direction = "<")
+
+sensitivity <- confusion1[2,2]/sum(confusion1[,2])
+specificity <- confusion1[1,1]/sum(confusion1[,1])
+
+#confusion1
+#sensitivity
+#specificity
+
+glm.probs=predict(glm.train, seismic.test, type="response")
+
+glm.pred=rep("0",646)
+glm.pred[glm.probs >.5]="1"
+confusion2 <- table(glm.pred, seismic.test$class)
+#mean(glm.pred==seismic.test$class)
+
+sensitivity <- confusion2[2,2]/sum(confusion2[,2])
+specificity <- confusion2[1,1]/sum(confusion2[,1])
+
+#confusion2
+#sensitivity
+#specificity
+
+super <- cbind(confusion1,confusion2)
+colnames(super) <- c("Train 0", "Train 1", "Test 0", "Test 1")
+rownames(super) <- c("Predict 0", "Predict 1")
+kable(super, caption="Training vs. Test for logistic regression")
+
+roc.Test <- roc(seismic.test$class, glm.probs, direction="<")
+
+par(mfrow = c(1,2))
+plot.roc(roc.Test, col="blue", auc.polygon=TRUE,main="ROC Curve", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
+plot.roc(roc.Train, add=TRUE)
+
+```
+
+# Linear Discriminant Analysis
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
+
+lda.fit <- lda(class~., data = seismic, subset = train)
+
+# TRAINING
+lda.pred <- predict(lda.fit, seismic.train)
+lda.class.train <- lda.pred$class
+
+confusion <- table(lda.class.train,seismic.train$class)
+sensitivity <- confusion[2,2]/sum(confusion[,2])
+specificity <- confusion[1,1]/sum(confusion[,1])
+
+confusion1 <- confusion
+
+library(ROCR)
+# choose the posterior probability column carefully, it may be 
+# lda.pred$posterior[,1] or lda.pred$posterior[,2], depending on your factor levels 
+pred <- prediction(lda.pred$posterior[,2], seismic.train$class) 
+perf_train <- performance(pred,"tpr","fpr")
+plot(perf,colorize=TRUE)
+
+## Test
+lda.pred.test <- predict(lda.fit, seismic.test)
+lda.class.test <- lda.pred.test$class
+
+confusion <- table(lda.class.test,seismic.test$class)
+sensitivity <- confusion[2,2]/sum(confusion[,2])
+specificity <- confusion[1,1]/sum(confusion[,1])
+
+confusion2 <- confusion
+
+pred <- prediction(lda.pred.test$posterior[,2], seismic.test$class) 
+perf_test <- performance(pred,"tpr","fpr")
+plot(perf_test,colorize=TRUE)
+lines(perf_train)
+
+
 
 ```
 
