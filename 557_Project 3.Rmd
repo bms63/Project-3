@@ -341,7 +341,7 @@ time6 <- total.time[3]
 
 ```
 
-# How to time your code!
+# How to time your code!!!
 
 ```{r}
 #-------------------------------------
