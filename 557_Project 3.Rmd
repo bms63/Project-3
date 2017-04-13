@@ -36,7 +36,7 @@ In this project, we used the seismic-bumps dataset provided by Sikora & Wróbel 
 
 # Loading packages into R
 library(data.table);library(car);library(lars);library(knitr);library(ISLR);library(leaps);library(glmnet);library(MASS);library(reshape);library(ggplot2);library(pROC)
-library(klaR);library(gridExtra)
+library(klaR);library(gridExtra);library(ROCR);library(e1071)
 
 
 #setwd("~/Box Sync/Skool/Spring 2017/557/Project-2-master")
@@ -54,7 +54,7 @@ The state of the mine was indeed deemed hazardous infrequently $-$ only 170 shif
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height = 3}
 ##---------------------------------------------
-## Some quick EDA from Hillary
+## 
 ##---------------------------------------------
 
 par(mfrow=c(1,2))
@@ -94,7 +94,7 @@ seismic.test <- seismic[test,]
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height = 2.5, fig.width = 3, fig.align='center'}
 
 ##--------------------------------------------
-## Logistic Regression  Confusion\Roc
+## Logistic Regression - Pre-Model Selection
 ##--------------------------------------------
 glm.train <- glm(class~., seismic.train, family=binomial)
 #summary(glm.train)
@@ -136,9 +136,101 @@ kable(super, caption="Training vs. Test for logistic regression")
 
 roc.Test <- roc(seismic.test$class, glm.probs, direction="<")
 
-par(mfrow = c(1,2))
+par(mfrow = c(1,1))
 plot.roc(roc.Test, col="blue", auc.polygon=TRUE,main="ROC Curve", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
 plot.roc(roc.Train, add=TRUE)
+
+##--------------------------------------------
+## Logistic Regression - Post-Variable Selection
+##--------------------------------------------
+
+###########
+# Model 1 = genergy + gpuls + nbumps + nbumps2 + nbumps4
+# Step Variable Selection
+###########
+
+glm.train <- glm(class~genergy + gpuls + nbumps + nbumps2 + nbumps4, seismic.train, family=binomial)
+glm.probs=predict(glm.train, type="response")
+
+glm.pred=rep("0",1938)
+glm.pred[glm.probs >.5]="1"
+confusion <- table(glm.pred ,seismic.train$class)
+
+roc.Train <- roc(seismic.train$class, glm.probs, direction = "<")
+
+# Confusion Table
+sensitivity <- confusion[2,2]/sum(confusion[,2])
+specificity <- confusion[1,1]/sum(confusion[,1])
+error.rate <- (confusion[1,2] + confusion[2,1])/sum(confusion)
+
+confusion1 <- confusion
+
+# Using Training model on Test Data
+glm.probs=predict(glm.train, seismic.test, type="response")
+
+glm.pred=rep("0",646)
+glm.pred[glm.probs >.5]="1"
+confusion <- table(glm.pred, seismic.test$class)
+
+roc.Test <- roc(seismic.test$class, glm.probs, direction="<")
+
+# Confusion Table
+sensitivity <- confusion[2,2]/sum(confusion[,2])
+specificity <- confusion[1,1]/sum(confusion[,1])
+error.rate <- (confusion[1,2] + confusion[2,1])/sum(confusion)
+confusion2 <- confusion
+
+
+# Plotting Roc Curves for Model 1
+plot.roc(roc.Train, col="blue", auc.polygon=TRUE,main="Train-ROC-Post", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
+plot.roc(roc.Test, col="red", auc.polygon=TRUE,main="Test-ROC-Post", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
+
+###########
+# Model 2=seismic+shift+gpuls+nbumps
+# LASSO Variable Selection
+###########
+
+glm.train <- glm(class~seismic+shift+gpuls+nbumps, seismic.train, family=binomial)
+
+glm.probs=predict(glm.train, type="response")
+
+glm.pred=rep("0",1938)
+glm.pred[glm.probs >.5]="1"
+confusion <- table(glm.pred ,seismic.train$class)
+
+roc.Train <- roc(seismic.train$class, glm.probs, direction = "<")
+
+# Confusion Table
+sensitivity <- confusion[2,2]/sum(confusion[,2])
+specificity <- confusion[1,1]/sum(confusion[,1])
+error.rate <- (confusion[1,2] + confusion[2,1])/sum(confusion)
+
+confusion3 <- confusion
+
+# Using Training model on Test Data
+glm.probs=predict(glm.train, seismic.test, type="response")
+
+glm.pred=rep("0",646)
+glm.pred[glm.probs >.5]="1"
+confusion <- table(glm.pred, seismic.test$class)
+
+# Confusion Table
+sensitivity <- confusion[2,2]/sum(confusion[,2])
+specificity <- confusion[1,1]/sum(confusion[,1])
+error.rate <- (confusion[1,2] + confusion[2,1])/sum(confusion)
+
+confusion4 <- confusion
+
+super <- cbind(confusion1,confusion2, confusion3, confusion4)
+colnames(super) <- c("M1-Train 0", "M1-Train 1", "M1-Test 0", "M1-Test 1","M2-Train 0", "M2-Train 1", "M2-Test 0", "M2-Test 1")
+rownames(super) <- c("Predict 0", "Predict 1")
+kable(super, caption="Model-1 vs Model-2")
+
+roc.Test <- roc(seismic.test$class, glm.probs, direction="<")
+
+# Plotting Roc Curves for Model 2
+plot.roc(roc.Train, col="blue", auc.polygon=TRUE,main="Train-ROC-Post", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
+plot.roc(roc.Test, col="red", auc.polygon=TRUE,main="Test-ROC-Post", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
 
 ```
 
@@ -163,7 +255,6 @@ library(ROCR)
 # lda.pred$posterior[,1] or lda.pred$posterior[,2], depending on your factor levels 
 pred <- prediction(lda.pred$posterior[,2], seismic.train$class) 
 perf_train <- performance(pred,"tpr","fpr")
-plot(perf,colorize=TRUE)
 
 ## Test
 lda.pred.test <- predict(lda.fit, seismic.test)
@@ -177,12 +268,17 @@ confusion2 <- confusion
 
 pred <- prediction(lda.pred.test$posterior[,2], seismic.test$class) 
 perf_test <- performance(pred,"tpr","fpr")
-plot(perf_test,colorize=TRUE)
-lines(perf_train)
 
+par(mfrow = c(1,2))
 
+plot(perf_train,colorize=TRUE, main="Train")
+plot(perf_test,colorize=TRUE, main="Test")
 
 ```
+
+# Quadratic Discriminant Analysis
+
+# Regularized 
 
 # Random Forests Classifier 
 
@@ -237,8 +333,8 @@ time7 <- total.time[3]
 
 ```{r}
 # Variable selection and refitting
-#model1 = genergy + gpuls + nbumps + nbumps2 + nbumps4
-#model2 = seismic + shift + gpuls + nbumps
+#model1 = genergy + gpuls + nbumps + nbumps2 + nbumps4 #Step
+#model2 = seismic + shift + gpuls + nbumps #Lasso
 
 library(e1071)
 
@@ -375,7 +471,7 @@ time4 <- total.time[3]
 
 start.time <- proc.time()
 
-tune.out4 <- tune(svm, factor(class)~genergy + gpuls + nbumps + nbumps2 + nbumps4, data = seismic[train,], kernel = "polynomial", ranges = list(cost = c(.001,.01,.1,), degree = c(2,3,4)))
+tune.out4 <- tune(svm, factor(class)~genergy + gpuls + nbumps + nbumps2 + nbumps4, data = seismic[train,], kernel = "polynomial", ranges = list(cost = c(.001,.01,.1), degree = c(2,3,4)))
 
 bestmod <- tune.out4$best.model
 ypred <- predict(bestmod, seismic[-train,])
