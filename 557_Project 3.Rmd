@@ -105,6 +105,7 @@ seismic.train <- seismic[train,]
 seismic.test <- seismic[test,]
 
 ## RF on Training Data 
+start.time <- proc.time()
 
 rf.seismic = randomForest(class~., data = seismic.train, importance = TRUE)
 yhat.rf.train = predict(rf.seismic, newdata = seismic.train)
@@ -133,6 +134,8 @@ test.accuracy
 importance(rf.seismic)
 varImpPlot(rf.seismic)
 
+total.time <- proc.time() - start.time
+time7 <- total.time[3] 
 ```
 
 # Support vector classifier and support vector machine
