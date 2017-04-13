@@ -301,7 +301,7 @@ time4 <- total.time[3]
 
 start.time <- proc.time()
 
-tune.out4 <- tune(svm, factor(class)~genergy + gpuls + nbumps + nbumps2 + nbumps4, data = seismic[train,], kernel = "polynomial", ranges = list(cost = c(.001,.01,.1,1), degree = c(2,3)))
+tune.out4 <- tune(svm, factor(class)~genergy + gpuls + nbumps + nbumps2 + nbumps4, data = seismic[train,], kernel = "polynomial", ranges = list(cost = c(.001,.01,.1,), degree = c(2,3,4)))
 
 bestmod <- tune.out4$best.model
 ypred <- predict(bestmod, seismic[-train,])
@@ -323,7 +323,7 @@ time5 <- total.time[3]
 
 start.time <- proc.time()
 
-tune.out5 <- tune(svm, factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "polynomial", ranges = list(cost = c(.001,.01,.1,1), degree = c(2,3)))
+tune.out5 <- tune(svm, factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "polynomial", ranges = list(cost = c(.001,.01,.1), degree = c(2,3,4)))
 
 bestmod <- tune.out5$best.model
 ypred <- predict(bestmod, seismic[-train,])
