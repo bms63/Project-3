@@ -285,7 +285,7 @@ perf_train <- performance(pred,"tpr","fpr")
 par(mfrow = c(1,2))
 
 ## Roc Curve for Training
-plot(perf_train,colorize=TRUE, main="Train")
+plot(perf_train,colorize=TRUE, main="Train-ROC-Full")
 abline(a=0, b= 1)
 perf_train <- performance(pred,"tpr","fpr",measure="auc")
 auc <- round(as.numeric(perf_train@y.values),5)
@@ -305,7 +305,7 @@ pred <- prediction(lda.pred.test$posterior[,2], seismic.test$class)
 perf_test <- performance(pred,"tpr","fpr")
 
 #Roc Curve for Test
-plot(perf_test,colorize=TRUE, main="Test")
+plot(perf_test,colorize=TRUE, main="Test-ROC-Full")
 abline(a=0, b= 1)
 perf_test <- performance(pred,"tpr","fpr",measure="auc")
 auc <- round(as.numeric(perf_test@y.values),5)
@@ -448,8 +448,136 @@ lda.rates.test <- cbind(rate2.test,rate4.test,rate6.test)
 lda.rates.test
 ```
 
-
 # Quadratic Discriminant Analysis
+
+## Full Model
+
+Full Model not able to handle the multicollinearity of the data.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
+##--------------------------------------------
+## Linear Discriminant Analysis - Full Model 
+##--------------------------------------------
+
+#Full Model not able to handle the multicollinearity of the data.
+```
+
+## Quadratic Discriminant Analysis - Step
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
+
+##-----------------------------------------
+## Fit QDA model after variable selection
+##-----------------------------------------
+
+# Stating Timing Method
+start.time <- proc.time()
+
+###########
+# Model 1 = genergy + gpuls + nbumps + nbumps2 + nbumps4
+# Step Variable Selection
+###########
+
+# Run Model 1 on Training Data
+qda.fit <- qda(class ~ genergy + gpuls + nbumps + nbumps2 + nbumps4, data=seismic.train)
+qda.pred=predict(qda.fit, seismic.train, type="response")
+qda.class.train <- qda.pred$class
+posterior.train <- qda.pred$posterior
+truth.train <- seismic.train$class
+
+# Misclassification rate (FP+FN)/total
+confusion <- table(qda.class.train,seismic.train$class)
+rate1.train <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+
+## Roc curve setup
+pred <- prediction(qda.pred$posterior[,2], seismic.train$class) 
+perf_train <- performance(pred,"tpr","fpr")
+
+par(mfrow = c(1,2))
+
+## Roc Curve for Training
+plot(perf_train,colorize=TRUE, main="Train")
+abline(a=0, b= 1)
+perf_train <- performance(pred,"tpr","fpr",measure="auc")
+auc <- round(as.numeric(perf_train@y.values),5)
+text(0.75, 0.25, auc, cex = .8)
+text(0.75, 0.35, "AUC", cex = .8)
+
+## Prediction for Test
+qda.pred.test <- predict(qda.fit, seismic.test)
+qda.class.test <- qda.pred.test$class
+
+# Misclassification rate (FP+FN)/total
+confusion <- table(qda.class.test,seismic.test$class)
+rate6.test <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+
+## Roc Curve setup
+pred <- prediction(qda.pred.test$posterior[,2], seismic.test$class) 
+perf_test <- performance(pred,"tpr","fpr")
+
+#Roc Curve for Test
+plot(perf_test,colorize=TRUE, main="Test")
+abline(a=0, b= 1)
+perf_test <- performance(pred,"tpr","fpr",measure="auc")
+auc <- round(as.numeric(perf_test@y.values),5)
+text(0.75, 0.25, auc, cex = .8)
+text(0.75, 0.35, "AUC", cex = .8)
+```
+
+## Quadratic Discriminant Analysis - LASSO
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
+###########
+# Model 2=seismic+shift+gpuls+nbumps
+# LASSO Variable Selection
+###########
+
+# Run Model 1 on Training Data
+qda.fit <- qda(class ~ seismic+shift+gpuls+nbumps, data=seismic.train)
+qda.pred=predict(qda.fit, seismic.train, type="response")
+qda.class.train <- qda.pred$class
+posterior.train <- qda.pred$posterior
+truth.train <- seismic.train$class
+
+# Misclassification rate (FP+FN)/total
+confusion <- table(qda.class.train,seismic.train$class)
+rate1.train <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+
+## Roc curve setup
+pred <- prediction(qda.pred$posterior[,2], seismic.train$class) 
+perf_train <- performance(pred,"tpr","fpr")
+
+par(mfrow = c(1,2))
+
+## Roc Curve for Training
+plot(perf_train,colorize=TRUE, main="Train")
+abline(a=0, b= 1)
+perf_train <- performance(pred,"tpr","fpr",measure="auc")
+auc <- round(as.numeric(perf_train@y.values),5)
+text(0.75, 0.25, auc, cex = .8)
+text(0.75, 0.35, "AUC", cex = .8)
+
+## Prediction for Test
+qda.pred.test <- predict(qda.fit, seismic.test)
+qda.class.test <- qda.pred.test$class
+
+# Misclassification rate (FP+FN)/total
+confusion <- table(qda.class.test,seismic.test$class)
+rate6.test <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+
+## Roc Curve setup
+pred <- prediction(qda.pred.test$posterior[,2], seismic.test$class) 
+perf_test <- performance(pred,"tpr","fpr")
+
+#Roc Curve for Test
+plot(perf_test,colorize=TRUE, main="Test")
+abline(a=0, b= 1)
+perf_test <- performance(pred,"tpr","fpr",measure="auc")
+auc <- round(as.numeric(perf_test@y.values),5)
+text(0.75, 0.25, auc, cex = .8)
+text(0.75, 0.35, "AUC", cex = .8)
+
+```
 
 # Regularized 
 
