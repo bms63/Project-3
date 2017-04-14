@@ -509,7 +509,7 @@ qda.class.test <- qda.pred.test$class
 
 # Misclassification rate (FP+FN)/total
 confusion <- table(qda.class.test,seismic.test$class)
-rate6.test <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+rate2.test <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
 
 ## Roc Curve setup
 pred <- prediction(qda.pred.test$posterior[,2], seismic.test$class) 
@@ -522,6 +522,11 @@ perf_test <- performance(pred,"tpr","fpr",measure="auc")
 auc <- round(as.numeric(perf_test@y.values),5)
 text(0.75, 0.25, auc, cex = .8)
 text(0.75, 0.35, "AUC", cex = .8)
+
+# Total time for this method
+total.time <- proc.time() - start.time
+time1 <- total.time[3] # the elapsed time
+
 ```
 
 ## Quadratic Discriminant Analysis - LASSO
@@ -532,6 +537,9 @@ text(0.75, 0.35, "AUC", cex = .8)
 # LASSO Variable Selection
 ###########
 
+# Stating Timing Method
+start.time <- proc.time()
+
 # Run Model 1 on Training Data
 qda.fit <- qda(class ~ seismic+shift+gpuls+nbumps, data=seismic.train)
 qda.pred=predict(qda.fit, seismic.train, type="response")
@@ -541,7 +549,7 @@ truth.train <- seismic.train$class
 
 # Misclassification rate (FP+FN)/total
 confusion <- table(qda.class.train,seismic.train$class)
-rate1.train <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+rate3.train <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
 
 ## Roc curve setup
 pred <- prediction(qda.pred$posterior[,2], seismic.train$class) 
@@ -563,7 +571,7 @@ qda.class.test <- qda.pred.test$class
 
 # Misclassification rate (FP+FN)/total
 confusion <- table(qda.class.test,seismic.test$class)
-rate6.test <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+rate4.test <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
 
 ## Roc Curve setup
 pred <- prediction(qda.pred.test$posterior[,2], seismic.test$class) 
@@ -577,9 +585,212 @@ auc <- round(as.numeric(perf_test@y.values),5)
 text(0.75, 0.25, auc, cex = .8)
 text(0.75, 0.35, "AUC", cex = .8)
 
+# Total time for this method
+total.time <- proc.time() - start.time
+time2 <- total.time[3] # the elapsed time
+
+# All system times for Full, Step and Lasso
+qda.times <- cbind(time1,time2)
+qda.times
+
+# All missclassification rates for Logistic Regression
+qda.rates.train <- cbind(rate1.train,rate3.train,rate5.train)
+qda.rates.train
+qda.rates.test <- cbind(rate2.test,rate4.test,rate6.test)
+qda.rates.test
 ```
 
 # Regularized 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
+##--------------------------------------------
+## Regularized Discriminant Analysis - Full Model 
+##--------------------------------------------
+
+# Stating Timing Method
+start.time <- proc.time()
+
+rda.fit <- rda(class~., data=seismic.train)
+
+## Using FULL model on TRAIN Data
+rda.pred=predict(rda.fit, seismic.train, type="response")
+rda.class.train <- rda.pred$class
+posterior.train <- rda.pred$posterior
+truth.train <- seismic.train$class
+
+# Misclassification rate (FP+FN)/total
+confusion <- table(rda.class.train,seismic.train$class)
+rate1.train <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+
+## Roc curve setup
+pred <- prediction(rda.pred$posterior[,2], seismic.train$class) 
+perf_train <- performance(pred,"tpr","fpr")
+
+par(mfrow = c(1,2))
+
+## Roc Curve for Training
+plot(perf_train,colorize=TRUE, main="Train")
+abline(a=0, b= 1)
+perf_train <- performance(pred,"tpr","fpr",measure="auc")
+auc <- round(as.numeric(perf_train@y.values),5)
+text(0.75, 0.25, auc, cex = .8)
+text(0.75, 0.35, "AUC", cex = .8)
+
+## Prediction for Test
+rda.pred.test <- predict(rda.fit, seismic.test)
+rda.class.test <- rda.pred.test$class
+
+# Misclassification rate (FP+FN)/total
+confusion <- table(rda.class.test,seismic.test$class)
+rate2.test <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+
+## Roc Curve setup
+pred <- prediction(rda.pred.test$posterior[,2], seismic.test$class) 
+perf_test <- performance(pred,"tpr","fpr")
+
+#Roc Curve for Test
+plot(perf_test,colorize=TRUE, main="Test")
+abline(a=0, b= 1)
+perf_test <- performance(pred,"tpr","fpr",measure="auc")
+auc <- round(as.numeric(perf_test@y.values),5)
+text(0.75, 0.25, auc, cex = .8)
+text(0.75, 0.35, "AUC", cex = .8)
+
+# Total time for this method
+total.time <- proc.time() - start.time
+time1 <- total.time[3] # the elapsed time
+```
+
+## Regularized Discriminant Analysis - Step
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
+###########
+# Model 1 = genergy + gpuls + nbumps + nbumps2 + nbumps4
+# Step Variable Selection
+###########
+# Stating Timing Method
+start.time <- proc.time()
+
+rda.fit <- rda(class~genergy + gpuls + nbumps + nbumps2 + nbumps4, data=seismic.train)
+
+## Using FULL model on TRAIN Data
+rda.pred=predict(rda.fit, seismic.train, type="response")
+rda.class.train <- rda.pred$class
+posterior.train <- rda.pred$posterior
+truth.train <- seismic.train$class
+
+# Misclassification rate (FP+FN)/total
+confusion <- table(rda.class.train,seismic.train$class)
+rate3.train <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+
+## Roc curve setup
+pred <- prediction(rda.pred$posterior[,2], seismic.train$class) 
+perf_train <- performance(pred,"tpr","fpr")
+
+par(mfrow = c(1,2))
+
+## Roc Curve for Training
+plot(perf_train,colorize=TRUE, main="Train")
+abline(a=0, b= 1)
+perf_train <- performance(pred,"tpr","fpr",measure="auc")
+auc <- round(as.numeric(perf_train@y.values),5)
+text(0.75, 0.25, auc, cex = .8)
+text(0.75, 0.35, "AUC", cex = .8)
+
+## Prediction for Test
+rda.pred.test <- predict(rda.fit, seismic.test)
+rda.class.test <- rda.pred.test$class
+
+# Misclassification rate (FP+FN)/total
+confusion <- table(rda.class.test,seismic.test$class)
+rate4.test <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+
+## Roc Curve setup
+pred <- prediction(rda.pred.test$posterior[,2], seismic.test$class) 
+perf_test <- performance(pred,"tpr","fpr")
+
+#Roc Curve for Test
+plot(perf_test,colorize=TRUE, main="Test")
+abline(a=0, b= 1)
+perf_test <- performance(pred,"tpr","fpr",measure="auc")
+auc <- round(as.numeric(perf_test@y.values),5)
+text(0.75, 0.25, auc, cex = .8)
+text(0.75, 0.35, "AUC", cex = .8)
+
+# Total time for this method
+total.time <- proc.time() - start.time
+time2 <- total.time[3] # the elapsed time
+```
+
+## Regularized Discriminant Analysis - Step
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
+###########
+# Model 2=seismic+shift+gpuls+nbumps
+# LASSO Variable Selection
+###########
+# Stating Timing Method
+start.time <- proc.time()
+rda.fit <- rda(class~seismic+shift+gpuls+nbumps, data=seismic.train)
+
+## Using FULL model on TRAIN Data
+rda.pred=predict(rda.fit, seismic.train, type="response")
+rda.class.train <- rda.pred$class
+posterior.train <- rda.pred$posterior
+truth.train <- seismic.train$class
+
+# Misclassification rate (FP+FN)/total
+confusion <- table(rda.class.train,seismic.train$class)
+rate5.train <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+
+## Roc curve setup
+pred <- prediction(rda.pred$posterior[,2], seismic.train$class) 
+perf_train <- performance(pred,"tpr","fpr")
+
+par(mfrow = c(1,2))
+
+## Roc Curve for Training
+plot(perf_train,colorize=TRUE, main="Train")
+abline(a=0, b= 1)
+perf_train <- performance(pred,"tpr","fpr",measure="auc")
+auc <- round(as.numeric(perf_train@y.values),5)
+text(0.75, 0.25, auc, cex = .8)
+text(0.75, 0.35, "AUC", cex = .8)
+
+## Prediction for Test
+rda.pred.test <- predict(rda.fit, seismic.test)
+rda.class.test <- rda.pred.test$class
+
+# Misclassification rate (FP+FN)/total
+confusion <- table(rda.class.test,seismic.test$class)
+rate6.test <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+
+## Roc Curve setup
+pred <- prediction(rda.pred.test$posterior[,2], seismic.test$class) 
+perf_test <- performance(pred,"tpr","fpr")
+
+#Roc Curve for Test
+plot(perf_test,colorize=TRUE, main="Test")
+abline(a=0, b= 1)
+perf_test <- performance(pred,"tpr","fpr",measure="auc")
+auc <- round(as.numeric(perf_test@y.values),5)
+text(0.75, 0.25, auc, cex = .8)
+text(0.75, 0.35, "AUC", cex = .8)
+
+# Total time for this method
+total.time <- proc.time() - start.time
+time3 <- total.time[3] # the elapsed time
+
+# All system times for Full, Step and Lasso
+rda.times <- cbind(time1,time2)
+rda.times
+
+# All missclassification rates for Logistic Regression
+rda.rates.train <- cbind(rate1.train,rate3.train,rate5.train)
+rda.rates.train
+rda.rates.test <- cbind(rate2.test,rate4.test,rate6.test)
+rda.rates.test
+```
 
 # Random Forests Classifier 
 
