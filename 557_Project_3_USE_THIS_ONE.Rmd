@@ -1,8 +1,4 @@
 ---
-output: pdf_document
----
-<<<<<<< HEAD
----
 title: "557_Project"
 author: "Ben Straub"
 date: "4/11/2017"
@@ -95,65 +91,63 @@ seismic.test <- seismic[test,]
 
 # Logistic Regression
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height = 2.5, fig.width = 3, fig.align='center'}
+## Full Model
 
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
+
+# Stating Timing Method
 start.time <- proc.time()
 
 ##--------------------------------------------
 ## Logistic Regression - Pre-Model Selection
 ##--------------------------------------------
-glm.train <- glm(class~., seismic.train, family=binomial)
-#summary(glm.train)
 
+## Running full model on train data
+glm.train <- glm(class~., seismic.train, family=binomial)
+
+## Getting predictions for train data
 glm.probs=predict(glm.train, type="response")
 glm.pred=rep("0",1938)
 glm.pred[glm.probs >.5]="1"
 
-confusion1 <- table(glm.pred ,seismic.train$class)
-#mean(glm.pred==seismic.train$class)
+# misclassification rate (FP+FN)/total
+confusion <- table(glm.pred ,seismic.train$class)
+rate1.train <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
 
+## Train Roc Curve.  Plotted at the end
 roc.Train <- roc(seismic.train$class, glm.probs, direction = "<")
 
-sensitivity <- confusion1[2,2]/sum(confusion1[,2])
-specificity <- confusion1[1,1]/sum(confusion1[,1])
-
-#confusion1
-#sensitivity
-#specificity
-
+## Getting predictions for Test data
 glm.probs=predict(glm.train, seismic.test, type="response")
-
 glm.pred=rep("0",646)
 glm.pred[glm.probs >.5]="1"
-confusion2 <- table(glm.pred, seismic.test$class)
-#mean(glm.pred==seismic.test$class)
 
-sensitivity <- confusion2[2,2]/sum(confusion2[,2])
-specificity <- confusion2[1,1]/sum(confusion2[,1])
+# misclassification rate (FP+FN)/total
+confusion <- table(glm.pred ,seismic.test$class)
+rate2.test <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
 
-#confusion2
-#sensitivity
-#specificity
-
-super <- cbind(confusion1,confusion2)
-colnames(super) <- c("Train 0", "Train 1", "Test 0", "Test 1")
-rownames(super) <- c("Predict 0", "Predict 1")
-kable(super, caption="Training vs. Test for logistic regression")
-
+## Test Roc Curve.  Plotted at the end
 roc.Test <- roc(seismic.test$class, glm.probs, direction="<")
 
-par(mfrow = c(1,1))
-plot.roc(roc.Test, col="blue", auc.polygon=TRUE,main="ROC Curve", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
-plot.roc(roc.Train, add=TRUE)
+## Plotting Test and Train ROC with AUC
+par(mfrow = c(1,2))
+plot.roc(roc.Train, col="blue", auc.polygon=TRUE,main="Train-ROC-Full", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
+plot.roc(roc.Test, col="red", auc.polygon=TRUE,main="Test-Roc-Full", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
 
+# Total time for this method
 total.time <- proc.time() - start.time
-
 time1 <- total.time[3] # the elapsed time
+```
+
+## Logistic Regression - Step Model
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 
 ##--------------------------------------------
 ## Logistic Regression - Post-Variable Selection
 ##--------------------------------------------
 
+# Stating Timing Method
 start.time <- proc.time()
 
 ###########
@@ -161,128 +155,128 @@ start.time <- proc.time()
 # Step Variable Selection
 ###########
 
+##  step-model on train data
 glm.train <- glm(class~genergy + gpuls + nbumps + nbumps2 + nbumps4, seismic.train, family=binomial)
-glm.probs=predict(glm.train, type="response")
 
+##  predictions for train data
+glm.probs=predict(glm.train, type="response")
 glm.pred=rep("0",1938)
 glm.pred[glm.probs >.5]="1"
-confusion <- table(glm.pred ,seismic.train$class)
 
+# misclassification rate (FP+FN)/total
+confusion <- table(glm.pred ,seismic.train$class)
+rate3.train <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+
+## Train Roc Curve.  Plotted at the end
 roc.Train <- roc(seismic.train$class, glm.probs, direction = "<")
 
-# Confusion Table
-sensitivity <- confusion[2,2]/sum(confusion[,2])
-specificity <- confusion[1,1]/sum(confusion[,1])
-error.rate <- (confusion[1,2] + confusion[2,1])/sum(confusion)
-
-confusion1 <- confusion
-
-# Using Training model on Test Data
+#  Training step-model on Test Data
 glm.probs=predict(glm.train, seismic.test, type="response")
 
+## predictions for test data
 glm.pred=rep("0",646)
 glm.pred[glm.probs >.5]="1"
-confusion <- table(glm.pred, seismic.test$class)
 
+# misclassification rate (FP+FN)/total
+confusion <- table(glm.pred ,seismic.test$class)
+rate4.test <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+
+## Test Roc Curve.  Plotted at the end
 roc.Test <- roc(seismic.test$class, glm.probs, direction="<")
 
-# Confusion Table
-sensitivity <- confusion[2,2]/sum(confusion[,2])
-specificity <- confusion[1,1]/sum(confusion[,1])
-error.rate <- (confusion[1,2] + confusion[2,1])/sum(confusion)
-confusion2 <- confusion
+# Plotting Roc Curves for Model 1/Step-Model
+plot.roc(roc.Train, col="blue", auc.polygon=TRUE,main="Train-ROC-Step", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
+plot.roc(roc.Test, col="red", auc.polygon=TRUE,main="Test-ROC-Step", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
 
-
-# Plotting Roc Curves for Model 1
-plot.roc(roc.Train, col="blue", auc.polygon=TRUE,main="Train-ROC-Post", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
-plot.roc(roc.Test, col="red", auc.polygon=TRUE,main="Test-ROC-Post", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
-
+# Total time for this method
 total.time <- proc.time() - start.time
 time2 <- total.time[3] # the elapsed time
+```
 
+## Logistic Regression - Lasso Model
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 ###########
 # Model 2=seismic+shift+gpuls+nbumps
 # LASSO Variable Selection
 ###########
 
+## Stating Timing Method
 start.time <- proc.time()
 
+## Lasso-model on train data
 glm.train <- glm(class~seismic+shift+gpuls+nbumps, seismic.train, family=binomial)
 
+##  predictions for train data
 glm.probs=predict(glm.train, type="response")
-
 glm.pred=rep("0",1938)
 glm.pred[glm.probs >.5]="1"
-confusion <- table(glm.pred ,seismic.train$class)
 
+# misclassification rate (FP+FN)/total
+confusion <- table(glm.pred ,seismic.train$class)
+rate5.train <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+
+## Train Roc Curve.  Plotted at the end
 roc.Train <- roc(seismic.train$class, glm.probs, direction = "<")
 
-# Confusion Table
-sensitivity <- confusion[2,2]/sum(confusion[,2])
-specificity <- confusion[1,1]/sum(confusion[,1])
-error.rate <- (confusion[1,2] + confusion[2,1])/sum(confusion)
-
-confusion3 <- confusion
-
-# Using Training model on Test Data
+# Using Training Model2-Lasso model on Test Data
 glm.probs=predict(glm.train, seismic.test, type="response")
 
+## predictions for test data
 glm.pred=rep("0",646)
 glm.pred[glm.probs >.5]="1"
-confusion <- table(glm.pred, seismic.test$class)
 
-# Confusion Table
-sensitivity <- confusion[2,2]/sum(confusion[,2])
-specificity <- confusion[1,1]/sum(confusion[,1])
-error.rate <- (confusion[1,2] + confusion[2,1])/sum(confusion)
+# misclassification rate (FP+FN)/total
+confusion <- table(glm.pred ,seismic.test$class)
+rate6.test <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
 
-confusion4 <- confusion
-
-super <- cbind(confusion1,confusion2, confusion3, confusion4)
-colnames(super) <- c("M1-Train 0", "M1-Train 1", "M1-Test 0", "M1-Test 1","M2-Train 0", "M2-Train 1", "M2-Test 0", "M2-Test 1")
-rownames(super) <- c("Predict 0", "Predict 1")
-kable(super, caption="Model-1 vs Model-2")
-
+## Test Roc Curve.  Plotted at the end
 roc.Test <- roc(seismic.test$class, glm.probs, direction="<")
 
 # Plotting Roc Curves for Model 2
-plot.roc(roc.Train, col="blue", auc.polygon=TRUE,main="Train-ROC-Post", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
-plot.roc(roc.Test, col="red", auc.polygon=TRUE,main="Test-ROC-Post", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
+plot.roc(roc.Train, col="blue", auc.polygon=TRUE,main="Train-ROC-Lasso", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
+plot.roc(roc.Test, col="red", auc.polygon=TRUE,main="Test-ROC-Lasso", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
 
+# Total time for this method
 total.time <- proc.time() - start.time
 time3 <- total.time[3] # the elapsed time
 
+# All system times for Full, Step and Lasso
 log.reg.times <- cbind(time1,time2, time3)
 log.reg.times
 
+# All missclassification rates for Logistic Regression
+log.reg.rates.train <- cbind(rate1.train,rate3.train,rate5.train)
+log.reg.rates.train
+log.reg.rates.test <- cbind(rate2.test,rate4.test,rate6.test)
+log.reg.rates.test
 ```
 
 # Linear Discriminant Analysis
 
+## Full Model
+
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 
 ##--------------------------------------------
-## Linear Discriminant Analysis - Pre-Model Selection
+## Linear Discriminant Analysis - Full Model 
 ##--------------------------------------------
 
-# Put this before your method
+# Stating Timing Method
 start.time <- proc.time()
 
+## Running full model on train data
 lda.fit <- lda(class~., data = seismic, subset = train)
 
-# TRAINING
+## predictions
 lda.pred <- predict(lda.fit, seismic.train)
 lda.class.train <- lda.pred$class
 
+# misclassification rate (FP+FN)/total
 confusion <- table(lda.class.train,seismic.train$class)
-sensitivity <- confusion[2,2]/sum(confusion[,2])
-specificity <- confusion[1,1]/sum(confusion[,1])
+rate1.train <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
 
-confusion1 <- confusion
-
-library(ROCR)
-# choose the posterior probability column carefully, it may be 
-# lda.pred$posterior[,1] or lda.pred$posterior[,2], depending on your factor levels 
+# roc curve setup
 pred <- prediction(lda.pred$posterior[,2], seismic.train$class) 
 perf_train <- performance(pred,"tpr","fpr")
 
@@ -299,10 +293,13 @@ text(0.75, 0.35, "AUC", cex = .8)
 ## Test
 lda.pred.test <- predict(lda.fit, seismic.test)
 lda.class.test <- lda.pred.test$class
+confusion <- table(lda.class.test,seismic.test$class)
+rate2.test <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
 
 pred <- prediction(lda.pred.test$posterior[,2], seismic.test$class) 
 perf_test <- performance(pred,"tpr","fpr")
 
+#Roc Curve for Test
 plot(perf_test,colorize=TRUE, main="Test")
 abline(a=0, b= 1)
 perf_test <- performance(pred,"tpr","fpr",measure="auc")
@@ -310,6 +307,7 @@ auc <- round(as.numeric(perf_test@y.values),5)
 text(0.75, 0.25, auc, cex = .8)
 text(0.75, 0.35, "AUC", cex = .8)
 
+# Total time for this method
 total.time <- proc.time() - start.time
 time1 <- total.time[3] # the elapsed time
 ```
