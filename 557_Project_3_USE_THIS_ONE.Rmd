@@ -36,7 +36,8 @@ rm(list=ls())
 
 # Loading packages into R
 library(data.table);library(car);library(lars);library(knitr);library(ISLR);library(leaps);library(glmnet);library(MASS);library(reshape);library(ggplot2);library(pROC)
-library(klaR);library(gridExtra);library(ROCR);library(e1071);library(gbm)
+library(klaR);library(gridExtra);library(ROCR);library(e1071);library(gbm);library(randomForest)
+
 
 
 #setwd("~/Box Sync/Skool/Spring 2017/557/Project-2-master")
@@ -792,26 +793,59 @@ rda.rates.test <- cbind(rate2.test,rate4.test,rate6.test)
 rda.rates.test
 ```
 
-# Random Forests Classifier 
+# Random Forests Classification  
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
-library(randomForest)
 
-## Random Forest for Classification Trees 
+## Setting data again for RF classifcation, as response variable has to be converted into "categorical" 
+seismic <- read.csv("seismic.csv")
+par(mfrow=c(1,2))
+seismic[,c(4:7,9:13,17:18)] <- seismic[,c(4:7,9:13,17:18)]
+seismic <- seismic[,-(14:16)]
 
+for(i in c(1:3,8)){
+  seismic[,i] <- as.numeric(seismic[,i])
+}
+
+# Make response variable "categorical" for RF classification 
 seismic$class = as.factor(seismic$class)
 
+# Setting train and test dataset 
+n <- dim(seismic)[1]
+p <- dim(seismic)[2]
 set.seed(2016)
 test <- sample(n, round(n/4))
 train <- (1:n)[-test]
 seismic.train <- seismic[train,]
 seismic.test <- seismic[test,]
+```
+## RF Classification BEFORE Variable Selection 
 
-## RF on Training Data 
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
+
 start.time <- proc.time()
 
-rf.seismic = randomForest(class~., data = seismic.train, importance = TRUE)
-yhat.rf.train = predict(rf.seismic, newdata = seismic.train)
+#------------------------------------------------------------------------------
+## Tune the RF: Finding optimul numbers of variables for splitting on each node
+#------------------------------------------------------------------------------
+bestmtry <- tuneRF(seismic.train[-16], seismic.train$class, ntreeTry=100, 
+     stepFactor=1.5,improve=0.01, trace=TRUE, plot=TRUE, dobest=FALSE)
+
+## RF on Training Data 
+
+rf.seismic = randomForest(class~., data = seismic.train, mtry=2, ntree=1000, importance = TRUE)
+yhat.rf.train = predict(rf.seismic, type = "prob", newdata = seismic.train)[,2]
+
+roc.Train <- roc(seismic.train$class, yhat.rf.train, direction = "<")
+par(mfrow = c(1,2))
+plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Train ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
+
+#rf.pred = prediction(yhat.rf.train, seismic.train$class)
+#rf.perf = performance(rf.pred,"tpr","fpr")
+#par(mfrow = c(1,2))
+#plot(rf.perf, main="ROC Curve for Random Forest", print.auc=TRUE, col=2, lwd=2)
+#abline(a=0,b=1,lwd=2,lty=2,col="gray", print.auc=TRUE)
+
 confusion <- table(yhat.rf.train, seismic.train$class)
 sensitivity <- confusion[2,2]/sum(confusion[,2])
 specificity <- confusion[1,1]/sum(confusion[,1])
@@ -823,7 +857,11 @@ train.accuracy
 
 ## RF on Test Data 
 
-yhat.rf.test = predict(rf.seismic, newdata = seismic.test)
+yhat.rf.test = predict(rf.seismic, type = "prob", newdata = seismic.test)[,2]
+roc.test <- roc(seismic.test$class, yhat.rf.test, direction = "<")
+par(mfrow = c(1,2))
+plot.roc(roc.test, col = "blue", auc.polygon = TRUE, main = "Test ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
+
 confusion <- table(yhat.rf.test, seismic.test$class)
 sensitivity <- confusion[2,2]/sum(confusion[,2])
 specificity <- confusion[1,1]/sum(confusion[,1])
@@ -833,15 +871,62 @@ specificity
 test.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.test)
 test.accuracy
 
+importance(rf.seismic)
+varImpPlot(rf.seismic)
+
+```
+## RF Classification AFTER Variable Selection 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
+
+#--------------------------------------------------------
+## Model 1 = genergy + gpuls + nbumps + nbumps2 + nbumps4
+#--------------------------------------------------------
+
+## RF on Training Data
+rf.seismic = randomForest(class~genergy + gpuls + nbumps + nbumps2 + nbumps4, data = seismic.train, mtry=2, ntree=1000, importance = TRUE)
+yhat.rf.train = predict(rf.seismic, type = "prob", newdata = seismic.train)[,2]
+roc.Train <- roc(seismic.train$class, yhat.rf.train, direction = "<")
+par(mfrow = c(1,2))
+plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Model 1: Train ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
+
+
+## RF on Test Data
+yhat.rf.test = predict(rf.seismic, type = "prob", newdata = seismic.test)[,2]
+roc.test <- roc(seismic.test$class, yhat.rf.test, direction = "<")
+par(mfrow = c(1,2))
+plot.roc(roc.test, col = "blue", auc.polygon = TRUE, main = "Model 1: Test ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
 
 importance(rf.seismic)
 varImpPlot(rf.seismic)
+
+#-------------------------------------- 
+## Model 2 = seismic+shift+gpuls+nbumps
+#--------------------------------------
+
+## RF on Training Data
+rf.seismic = randomForest(class~seismic+shift+gpuls+nbumps, data = seismic.train, mtry=2, ntree=1000, importance = TRUE)
+yhat.rf.train = predict(rf.seismic, type = "prob", newdata = seismic.train)[,2]
+roc.Train <- roc(seismic.train$class, yhat.rf.train, direction = "<")
+par(mfrow = c(1,2))
+plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Model 2: Train ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
+
+
+## RF on Test Data
+yhat.rf.test = predict(rf.seismic, type = "prob", newdata = seismic.test)[,2]
+roc.test <- roc(seismic.test$class, yhat.rf.test, direction = "<")
+par(mfrow = c(1,2))
+plot.roc(roc.test, col = "blue", auc.polygon = TRUE, main = "Model 2: Test ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
+
+importance(rf.seismic)
+varImpPlot(rf.seismic)
+
 
 total.time <- proc.time() - start.time
 time7 <- total.time[3] 
 ```
 
-#boosting
+#Boosting
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, eval=F}
 set.seed(1)
