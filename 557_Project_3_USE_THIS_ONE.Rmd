@@ -35,8 +35,8 @@ In this project, we used the seismic-bumps dataset provided by Sikora & Wróbel 
 rm(list=ls())
 
 # Loading packages into R
-library(data.table);library(car);library(lars);library(knitr);library(ISLR);library(leaps);library(glmnet);library(MASS);library(reshape);library(ggplot2);library(pROC)
-library(klaR);library(gridExtra);library(ROCR);library(e1071);library(gbm)
+library(data.table);library(car);library(lars);library(knitr);library(ISLR);library(leaps);library(glmnet);library(MASS);library(reshape);library(ggplot2);library(pROC);library(klaR);library(gridExtra);library(ROCR);library(e1071);library(gbm);library(randomForest)
+
 
 
 #setwd("~/Box Sync/Skool/Spring 2017/557/Project-2-master")
@@ -49,8 +49,6 @@ seismic <- read.csv("seismic.csv")
 # Exploratory Data Analysis 
  
 The state of the mine was indeed deemed hazardous infrequently $-$ only 170 shifts out of 2584 $-$ a difficult problem in our analyses. We want to examine which observations of seismic activity can help in the prediction of the hazard state of the mine during the next shift. Regression diagnostics indicate that the data, in general, meet most assumptions. However, we see that that data are somewhat skewed right, and there is severe multicollinearity (VIF > 10) between some of the covariates, as shown below.
-
-\vspace{-14mm}
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height = 3}
 ##---------------------------------------------
@@ -722,7 +720,7 @@ total.time <- proc.time() - start.time
 time2 <- total.time[3] # the elapsed time
 ```
 
-## Regularized Discriminant Analysis - Step
+## Regularized Discriminant Analysis - Lasso
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 ###########
@@ -792,26 +790,230 @@ rda.rates.test <- cbind(rate2.test,rate4.test,rate6.test)
 rda.rates.test
 ```
 
-# Random Forests Classifier 
+# Boosting before variable selection
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, eval=T}
+
+#run boosting
+start.time <- proc.time()
+
+boost.seismic =gbm(class~.,data=seismic.train, distribution="bernoulli",n.trees =5000, interaction.depth =4)
+
+total.time <- proc.time() - start.time
+time8 <- total.time[3] 
+time8
+
+#summary(boost.seismic)
+
+###marginal effect of the selected variables on the response
+par(mfrow =c(1,2))
+plot(boost.seismic ,i="genergy")
+plot(boost.seismic ,i="energy")
+
+#predict on the train dataset
+yhat.boost.train=predict (boost.seismic,newdata =seismic.train,n.trees =5000,type="response")
+#yhat.boost.train
+
+#round to 0 and 1
+yhat.boost.train.round=round(yhat.boost.train)
+#yhat.boost.train.round
+
+#roc curve on train dataset
+
+roc.Train <- roc(seismic.train$class, yhat.boost.train.round, direction = "<")
+par(mfrow = c(1,2))
+plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Test ROC for Boosting Classification", xlab = "False Positive Rate", ylab = "True Positive Rate",print.auc = TRUE)
+
+#predict on the test dataset
+yhat.boost.test=predict (boost.seismic,newdata =seismic.test,n.trees =5000,type="response")
+#yhat.boost.test
+
+#round to 0 and 1
+yhat.boost.test.round=round(yhat.boost.test)
+#yhat.boost.test.round
+
+#roc curve on test dataset
+
+roc.Train <- roc(seismic.test$class, yhat.boost.test.round, direction = "<")
+par(mfrow = c(1,2))
+plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Test ROC for Boosting Classification", xlab = "False Positive Rate", ylab = "True Positive Rate",print.auc = TRUE)
+
+## confusion table on Test Data 
+#confusion <- table(yhat.boost.test.round, seismic.test$class)
+#sensitivity <- confusion[2,2]/sum(confusion[,2])
+#specificity <- confusion[1,1]/sum(confusion[,1])
+#mean((yhat.rf.train - seismic.train$class)^2)
+#sensitivity
+#specificity
+#train.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.train)
+#train.accuracy
+
+```
+
+#Boosting after variable selection
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, eval=T}
+#--------------------------------------------------------
+## Model 1 = genergy + gpuls + nbumps + nbumps2 + nbumps4
+#--------------------------------------------------------
+
+start.time <- proc.time()
+
+boost.seismic =gbm(class~genergy + gpuls + nbumps + nbumps2 + nbumps4,data=seismic.train, distribution="bernoulli",n.trees =5000, interaction.depth =4)
+
+total.time <- proc.time() - start.time
+time9 <- total.time[3] 
+time9
+
+#summary(boost.seismic)
+
+#predict on the train dataset
+yhat.boost.train=predict (boost.seismic,newdata =seismic.train,n.trees =5000,type="response")
+#yhat.boost.train
+
+#round to 0 and 1
+yhat.boost.train.round=round(yhat.boost.train)
+#yhat.boost.train.round
+
+#roc curve on train dataset
+
+roc.Train <- roc(seismic.train$class, yhat.boost.train.round, direction = "<")
+par(mfrow = c(1,2))
+plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Test ROC for Boosting Classification", xlab = "False Positive Rate", ylab = "True Positive Rate",print.auc = TRUE)
+
+#predict on the test dataset
+yhat.boost.test=predict (boost.seismic,newdata =seismic.test,n.trees =5000,type="response")
+#yhat.boost.test
+
+#round to 0 and 1
+yhat.boost.test.round=round(yhat.boost.test)
+#yhat.boost.test.round
+
+#roc curve on test dataset
+
+roc.Train <- roc(seismic.test$class, yhat.boost.test.round, direction = "<")
+par(mfrow = c(1,2))
+plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Test ROC for Boosting Classification", xlab = "False Positive Rate", ylab = "True Positive Rate",print.auc = TRUE)
+
+## confusion table on Test Data 
+#confusion <- table(yhat.boost.test.round, seismic.test$class)
+#sensitivity <- confusion[2,2]/sum(confusion[,2])
+#specificity <- confusion[1,1]/sum(confusion[,1])
+
+#sensitivity
+#specificity
+#train.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.train)
+#train.accuracy
+
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, eval=F}
+#-------------------------------------- 
+## Model 2 = seismic+shift+gpuls+nbumps
+#--------------------------------------
+
+start.time <- proc.time()
+
+boost.seismic =gbm(class~seismic+shift+gpuls+nbumps,data=seismic.train, distribution="bernoulli",n.trees =5000, interaction.depth =4)
+
+total.time <- proc.time() - start.time
+time9 <- total.time[3] 
+time9
+
+#summary(boost.seismic)
+
+#predict on the train dataset
+yhat.boost.train=predict (boost.seismic,newdata =seismic.train,n.trees =5000,type="response")
+#yhat.boost.train
+
+#round to 0 and 1
+yhat.boost.train.round=round(yhat.boost.train)
+#yhat.boost.train.round
+
+#roc curve on train dataset
+
+roc.Train <- roc(seismic.train$class, yhat.boost.train.round, direction = "<")
+par(mfrow = c(1,2))
+plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Test ROC for Boosting Classification", xlab = "False Positive Rate", ylab = "True Positive Rate",print.auc = TRUE)
+
+#predict on the test dataset
+yhat.boost.test=predict (boost.seismic,newdata =seismic.test,n.trees =5000,type="response")
+#yhat.boost.test
+
+#round to 0 and 1
+yhat.boost.test.round=round(yhat.boost.test)
+#yhat.boost.test.round
+
+#roc curve on test dataset
+roc.Train <- roc(seismic.test$class, yhat.boost.test.round, direction = "<")
+par(mfrow = c(1,2))
+plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Test ROC for Boosting Classification", xlab = "False Positive Rate", ylab = "True Positive Rate",print.auc = TRUE)
+
+## confusion table on Test Data 
+#confusion <- table(yhat.boost.test.round, seismic.test$class)
+#sensitivity <- confusion[2,2]/sum(confusion[,2])
+#specificity <- confusion[1,1]/sum(confusion[,1])
+
+#sensitivity
+#specificity
+#train.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.train)
+#train.accuracy
+```
+
+# Random Forests Classification  
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
-library(randomForest)
 
-## Random Forest for Classification Trees 
+## Setting data again for RF classifcation, as response variable has to be converted into "categorical" 
+seismic <- read.csv("seismic.csv")
+par(mfrow=c(1,2))
+seismic[,c(4:7,9:13,17:18)] <- seismic[,c(4:7,9:13,17:18)]
+seismic <- seismic[,-(14:16)]
 
+for(i in c(1:3,8)){
+  seismic[,i] <- as.numeric(seismic[,i])
+}
+
+# Make response variable "categorical" for RF classification 
 seismic$class = as.factor(seismic$class)
 
+# Setting train and test dataset 
+n <- dim(seismic)[1]
+p <- dim(seismic)[2]
 set.seed(2016)
 test <- sample(n, round(n/4))
 train <- (1:n)[-test]
 seismic.train <- seismic[train,]
 seismic.test <- seismic[test,]
+```
+
+## RF Classification BEFORE Variable Selection 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
+
+start.time <- proc.time()
+#------------------------------------------------------------------------------
+## Tune the RF: Finding optimul numbers of variables for splitting on each node
+#------------------------------------------------------------------------------
+bestmtry <- tuneRF(seismic.train[-16], seismic.train$class, ntreeTry=100, 
+     stepFactor=1.5,improve=0.01, trace=TRUE, plot=TRUE, dobest=FALSE)
 
 ## RF on Training Data 
-start.time <- proc.time()
 
-rf.seismic = randomForest(class~., data = seismic.train, importance = TRUE)
-yhat.rf.train = predict(rf.seismic, newdata = seismic.train)
+rf.seismic = randomForest(class~., data = seismic.train, mtry=2, ntree=1000, importance = TRUE)
+yhat.rf.train = predict(rf.seismic, type = "prob", newdata = seismic.train)[,2]
+
+roc.Train <- roc(seismic.train$class, yhat.rf.train, direction = "<")
+par(mfrow = c(1,2))
+plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Train ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
+
+#rf.pred = prediction(yhat.rf.train, seismic.train$class)
+#rf.perf = performance(rf.pred,"tpr","fpr")
+#par(mfrow = c(1,2))
+#plot(rf.perf, main="ROC Curve for Random Forest", print.auc=TRUE, col=2, lwd=2)
+#abline(a=0,b=1,lwd=2,lty=2,col="gray", print.auc=TRUE)
+
 confusion <- table(yhat.rf.train, seismic.train$class)
 sensitivity <- confusion[2,2]/sum(confusion[,2])
 specificity <- confusion[1,1]/sum(confusion[,1])
@@ -823,7 +1025,11 @@ train.accuracy
 
 ## RF on Test Data 
 
-yhat.rf.test = predict(rf.seismic, newdata = seismic.test)
+yhat.rf.test = predict(rf.seismic, type = "prob", newdata = seismic.test)[,2]
+roc.test <- roc(seismic.test$class, yhat.rf.test, direction = "<")
+par(mfrow = c(1,2))
+plot.roc(roc.test, col = "blue", auc.polygon = TRUE, main = "Test ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
+
 confusion <- table(yhat.rf.test, seismic.test$class)
 sensitivity <- confusion[2,2]/sum(confusion[,2])
 specificity <- confusion[1,1]/sum(confusion[,1])
@@ -833,32 +1039,61 @@ specificity
 test.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.test)
 test.accuracy
 
+importance(rf.seismic)
+varImpPlot(rf.seismic)
+
+```
+
+## RF Classification AFTER Variable Selection 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
+
+#--------------------------------------------------------
+## Model 1 = genergy + gpuls + nbumps + nbumps2 + nbumps4
+#--------------------------------------------------------
+
+## RF on Training Data
+rf.seismic = randomForest(class~genergy + gpuls + nbumps + nbumps2 + nbumps4, data = seismic.train, mtry=2, ntree=1000, importance = TRUE)
+yhat.rf.train = predict(rf.seismic, type = "prob", newdata = seismic.train)[,2]
+roc.Train <- roc(seismic.train$class, yhat.rf.train, direction = "<")
+par(mfrow = c(1,2))
+plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Model 1: Train ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
+
+
+## RF on Test Data
+yhat.rf.test = predict(rf.seismic, type = "prob", newdata = seismic.test)[,2]
+roc.test <- roc(seismic.test$class, yhat.rf.test, direction = "<")
+par(mfrow = c(1,2))
+plot.roc(roc.test, col = "blue", auc.polygon = TRUE, main = "Model 1: Test ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
 
 importance(rf.seismic)
 varImpPlot(rf.seismic)
 
+#-------------------------------------- 
+## Model 2 = seismic+shift+gpuls+nbumps
+#--------------------------------------
+
+## RF on Training Data
+rf.seismic = randomForest(class~seismic+shift+gpuls+nbumps, data = seismic.train, mtry=2, ntree=1000, importance = TRUE)
+yhat.rf.train = predict(rf.seismic, type = "prob", newdata = seismic.train)[,2]
+roc.Train <- roc(seismic.train$class, yhat.rf.train, direction = "<")
+par(mfrow = c(1,2))
+plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Model 2: Train ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
+
+
+## RF on Test Data
+yhat.rf.test = predict(rf.seismic, type = "prob", newdata = seismic.test)[,2]
+roc.test <- roc(seismic.test$class, yhat.rf.test, direction = "<")
+par(mfrow = c(1,2))
+plot.roc(roc.test, col = "blue", auc.polygon = TRUE, main = "Model 2: Test ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
+
+importance(rf.seismic)
+varImpPlot(rf.seismic)
+
+
 total.time <- proc.time() - start.time
 time7 <- total.time[3] 
 ```
-
-#boosting
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, eval=F}
-set.seed(1)
-boost.seismic =gbm(class~.,data=seismic.train, distribution="bernoulli",n.trees =5000, interaction.depth =4)
-summary(boost.seismic)
-
-###marginal effect of the selected variables on the response
-par(mfrow =c(1,2))
-plot(boost.seismic ,i="genergy")
-plot(boost.seismic ,i="energy")
-
-#predict on the test dataset
-#yhat.boost=predict (boost.seismic,newdata =seismic [-train ,],n.trees =5000,type="response")
-#yhat.boost
-
-```
-
 
 # Support vector classifier and support vector machine
 
