@@ -35,14 +35,7 @@ In this project, we used the seismic-bumps dataset provided by Sikora & Wróbel 
 rm(list=ls())
 
 # Loading packages into R
-<<<<<<< HEAD
-library(data.table);library(car);library(lars);library(knitr);library(ISLR);library(leaps);library(glmnet);library(MASS);library(reshape);library(ggplot2);library(pROC);library(klaR);library(gridExtra);library(ROCR);library(e1071);library(gbm);library(randomForest)
-=======
-library(data.table);library(car);library(lars);library(knitr);library(ISLR);library(leaps);library(glmnet);library(MASS);library(reshape);library(ggplot2);library(pROC)
-library(klaR);library(gridExtra);library(ROCR);library(e1071);library(gbm);library(randomForest)
->>>>>>> origin/master
-
-
+library(data.table);library(car);library(lars);library(knitr);library(ISLR);library(leaps);library(glmnet);library(MASS);library(reshape);library(ggplot2);library(pROC);library(klaR);library(gridExtra);library(ROCR);library(e1071);library(gbm);library(randomForest);
 
 #setwd("~/Box Sync/Skool/Spring 2017/557/Project-2-master")
 #setwd("F:/Penn_State/Spring2017/STAT557/Workspace")
@@ -967,8 +960,6 @@ plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Test ROC for Boost
 #train.accuracy
 ```
 
-=======
->>>>>>> origin/master
 # Random Forests Classification  
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
@@ -978,19 +969,15 @@ seismic <- read.csv("seismic.csv")
 par(mfrow=c(1,2))
 seismic[,c(4:7,9:13,17:18)] <- seismic[,c(4:7,9:13,17:18)]
 seismic <- seismic[,-(14:16)]
-<<<<<<< HEAD
 
 for(i in c(1:3,8)){
   seismic[,i] <- as.numeric(seismic[,i])
 }
 
-=======
-
 for(i in c(1:3,8)){
   seismic[,i] <- as.numeric(seismic[,i])
 }
 
->>>>>>> origin/master
 # Make response variable "categorical" for RF classification 
 seismic$class = as.factor(seismic$class)
 
@@ -1003,10 +990,7 @@ train <- (1:n)[-test]
 seismic.train <- seismic[train,]
 seismic.test <- seismic[test,]
 ```
-<<<<<<< HEAD
 
-=======
->>>>>>> origin/master
 ## RF Classification BEFORE Variable Selection 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
@@ -1033,8 +1017,8 @@ plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Train ROC for RF C
 #plot(rf.perf, main="ROC Curve for Random Forest", print.auc=TRUE, col=2, lwd=2)
 #abline(a=0,b=1,lwd=2,lty=2,col="gray", print.auc=TRUE)
 
-<<<<<<< HEAD
-=======
+#<<<<<<< HEAD
+#=======
 #------------------------------------------------------------------------------
 ## Tune the RF: Finding optimul numbers of variables for splitting on each node
 #------------------------------------------------------------------------------
@@ -1056,7 +1040,6 @@ plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Train ROC for RF C
 #plot(rf.perf, main="ROC Curve for Random Forest", print.auc=TRUE, col=2, lwd=2)
 #abline(a=0,b=1,lwd=2,lty=2,col="gray", print.auc=TRUE)
 
->>>>>>> origin/master
 confusion <- table(yhat.rf.train, seismic.train$class)
 sensitivity <- confusion[2,2]/sum(confusion[,2])
 specificity <- confusion[1,1]/sum(confusion[,1])
@@ -1082,18 +1065,15 @@ specificity
 test.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.test)
 test.accuracy
 
-<<<<<<< HEAD
 importance(rf.seismic)
 varImpPlot(rf.seismic)
 
 ```
 
 ## RF Classification AFTER Variable Selection 
-=======
-importance(rf.seismic)
-varImpPlot(rf.seismic)
 
-```
+
+
 ## RF Classification AFTER Variable Selection 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
@@ -1146,7 +1126,6 @@ time7 <- total.time[3]
 ```
 
 #Boosting
->>>>>>> origin/master
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 
