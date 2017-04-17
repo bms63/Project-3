@@ -1162,10 +1162,10 @@ library(e1071)
 # Get the ROC curve for svm
 library(ROCR)
 
-rocplot <- function(pred, truth, ...){
+rocplot <- function(pred, truth, add = F,...){
   predob <- prediction(pred, truth)
   perf <- performance(predob, "tpr", "fpr")
-  plot(perf,...)
+  plot(perf, add = add,...)
 }
 #--------------------------------------------------
 
@@ -1195,8 +1195,8 @@ fitted.test1 <- attributes(predict(svmfit.best1, seismic[-train,], decision.valu
 
 # It is unsurprising that this doesn't work well, because we are using a linear classifier
 # However, we have reason to believe that a non-linear classifier would be more appropriate
-rocplot(fitted1, seismic[train,"class"], main = "Training data")
-rocplot(fitted.test1, seismic[-train,"class"], main = "Test data")
+#rocplot(fitted1, seismic[train,"class"], main = "Training data")
+#rocplot(fitted.test1, seismic[-train,"class"], main = "Test data")
 
 total.time <- proc.time() - start.time
 time1 <- total.time[3]
@@ -1249,8 +1249,8 @@ svmrad2 <- svm(factor(class)~genergy + gpuls + nbumps + nbumps2 + nbumps4, data 
 fitted2 <- attributes(predict(svmrad2, seismic[train,], decision.values = T))$decision.values
 fitted.test2 <- attributes(predict(svmrad2, seismic[-train,],decision.values = T))$decision.values
 
-rocplot(fitted2, seismic[train,"class"], main = "Training data")
-rocplot(fitted.test2, seismic[-train,"class"], main = "Test data")
+#rocplot(fitted2, seismic[train,"class"], main = "Training data")
+#rocplot(fitted.test2, seismic[-train,"class"], main = "Test data")
 
 total.time <- proc.time() - start.time
 time3 <- total.time[3]
@@ -1297,8 +1297,8 @@ svmpoly4 <- svm(factor(class)~genergy + gpuls + nbumps + nbumps2 + nbumps4, data
 fitted4 <- attributes(predict(svmpoly4, seismic[train,], decision.values = T))$decision.values
 fitted.test4 <- attributes(predict(svmpoly4, seismic[-train,],decision.values = T))$decision.values
 
-rocplot(fitted4, seismic[train,"class"], main = "Training data")
-rocplot(fitted.test4, seismic[-train,"class"], main = "Test data")
+#rocplot(fitted4, seismic[train,"class"], main = "Training data")
+#rocplot(fitted.test4, seismic[-train,"class"], main = "Test data")
 
 total.time <- proc.time() - start.time
 time5 <- total.time[3]
@@ -1336,6 +1336,20 @@ time5 <- total.time[3]
 
 ```
 
+```{r, echo = F, message = F, warning = F, fig.height = 4, fig.width=11, fig.cap = "ROC curves for SVM, where training is in blue, test in brown."}
+library(ROCR)
+par(mfrow = c(1,3))
+rocplot(fitted1, seismic[train,"class"], main = "ROC for Linear Kernel", col = "dark cyan")
+rocplot(fitted.test1, seismic[-train,"class"], add = T, col = "coral3")
+
+rocplot(fitted2, seismic[train,"class"], main = "ROC for Radial Kernel", col = "dark cyan")
+rocplot(fitted.test2, seismic[-train,"class"], add = T, col = "coral3")
+
+rocplot(fitted4, seismic[train,"class"], main = "ROC for Polynomial Kernel", col = "dark cyan")
+rocplot(fitted.test4, seismic[-train,"class"], add = T, col = "coral3")
+
+```
+
 |*Stepwise Model*       || ||
 |:------|-------:|-----:|--------:|
 |*Kernel*|linear|radial|polynomial|
@@ -1344,63 +1358,3 @@ time5 <- total.time[3]
 |*degree*|N/A   |N/A   |2         |
 |*time*  |5.4   |26.47 |25.31     |
 |*misclassification rate*|.06|.06|.06|
-
-
-
-# Appendix
-
-### Table I. Attribute information of the seismic-bumps dataset
-
- | Data Attributes | Description | Data Types | 
-| -----------|-------------------------------------------------|----------|
-| seismic   | result of shift seismic hazard assessment: 'a' - lack of hazard, 'b' - low hazard, 'c' - high hazard, 'd' - danger state  | Categorical   |
-| seismoacoustic | result of shift seismic hazard assessment | Categorical  | 
-| shift  | type of a shift: 'W' - coal-getting, 'N' - preparation shift  | Categorical  | 
-| genergy  | seismic energy recorded within previous shift by active geophones (GMax) monitoring the longwall | Continuous  | 
-| gpuls  | number of pulses recorded within previous shift by GMax | Continuous |
-| gdenergy  | deviation of recorded energy within previous shift from average energy recorded during eight previous shifts  | Continuous  | 
-| gdpuls | deviation of recorded pulses within previous shift from average number of pulses recorded during eight previous shifts  | Continuous  | 
-| ghazard  | result of shift seismic hazard assessment by the seismoacoustic method based on registration coming from GMax  | Categorical | 
-| nbumps   | the number of seismic bumps recorded within previous shift | Continuous  | 
-| nbumps$i$, $i\in\{1,\ldots,5\}$  | the number of seismic bumps ($10^i-10^{i+1}$ J) registered within previous shift | Continuous  | 
-| energy   | total energy of seismic bumps registered within previous shift  | Continuous  | 
-| maxenergy  | maximum energy of the seismic bumps registered within previous shift  | Continuous  | 
-| class  | the decision attribute: '1' - high energy seismic bump occurred in the next shift ('hazardous state'), '0' - no high energy seismic bumps occurred in th next shift ('non-hazardous state') | Categorical   | 
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height = 3}
-##---------------------------------------------
-## Some quick EDA from Hillary
-##---------------------------------------------
-
-setwd("/Users/benStraub/Desktop/557/Project-3")
-seismic <- read.csv("seismic.csv")
-par(mfrow=c(1,2))
-
-seismic[,c(4:7,9:13,17:18)] <- seismic[,c(4:7,9:13,17:18)]
-seismic <- seismic[,-(14:16)]
-
-for(i in c(1:3,8)){
-  seismic[,i] <- as.numeric(seismic[,i])
-}
-
-fit <- lm(class~., data = seismic)
-
-#for(i in c(4:7,9:15)){
-#  eval(parse(text = paste0("qqnorm(seismic$",names(seismic)[i],")")))
-#  eval(parse(text = paste0("qqline(seismic$",names(seismic)[i],", col = 2)")))
-#}
-
-res <- fit$residuals
-fitvals <- fit$fitted
-plot(fitvals, res, xlab = "Fitted Values", ylab = "Residuals")
-abline(h=0, col = 'red')
-hist(res, xlab = "Residuals", main = "")
-
-par(mfrow=c(2,2))
-
-x <- seismic[c(-1,-2,-3,-8,-14,-15,-16,-19)]
-
-vifs <- round(as.data.frame(t(vif(fit))),2)
-kable(vifs[1:7], caption="Table II-VIFs of Linear Model")
-kable(vifs[8:15], caption="Table II-VIFs of Linear Model")
-```
