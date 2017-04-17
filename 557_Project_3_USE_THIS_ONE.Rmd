@@ -65,7 +65,7 @@ seismic.test <- seismic[test,]
 
 ```
 
-## Logistic Regression-Full Model  Logistic Regression - Step Model
+## 2.1 Logistic Regression-Full Model  Logistic Regression - Step Model
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2}
 
@@ -214,16 +214,15 @@ time3 <- total.time[3] # the elapsed time
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
 # All system times for Full, Step and Lasso
-log.reg <- matrix(c(time1,time2,time3,rate1.train,rate3.train,rate5.train,rate2.test,rate4.test,rate6.test),nrow=3,ncol=3)
+log.reg <- matrix(c(time1,time2,time3,rate1.train,rate3.train,rate5.train,rate2.test,rate4.test,rate6.test),nrow=3,ncol=3, byrow=T)
 colnames(log.reg) <- c("Full", "Step", "Lasso")
 rownames(log.reg) <- c("Computing Time", "Train Error Rates", "Test Error Rates")
 kable(log.reg, caption="Logistic Regression")
 ```
 
-# Discriminant Analysis
-Full Model
+## 2.2 Linear Discriminant Analysis
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, cache=T}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2.5,cache=T}
 
 ##--------------------------------------------
 ## Linear Discriminant Analysis - Full Model 
@@ -247,7 +246,7 @@ rate1.train <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(con
 pred <- prediction(lda.pred$posterior[,2], seismic.train$class) 
 perf_train <- performance(pred,"tpr","fpr")
 
-par(mfrow = c(1,2))
+par(mfrow = c(1,4))
 
 ## Roc Curve for Training
 plot(perf_train,colorize=TRUE, main="Train-ROC-Full")
@@ -280,11 +279,7 @@ text(0.75, 0.35, "AUC", cex = .8)
 # Total time for this method
 total.time <- proc.time() - start.time
 time1 <- total.time[3] # the elapsed time
-```
 
-## Linear Discriminant Analysis - Step
-
-```{r, echo = F, message = F, comment = NA, cache=T}
 ##--------------------------------------------
 ## Linear Discriminant Analysis - Post-Variable Selection
 ##--------------------------------------------
@@ -309,8 +304,6 @@ rate3.train <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(con
 ## Roc curve setup
 pred <- prediction(lda.pred$posterior[,2], seismic.train$class) 
 perf_train <- performance(pred,"tpr","fpr")
-
-par(mfrow = c(1,2))
 
 ## Roc Curve for Training
 plot(perf_train,colorize=TRUE, main="Train")
@@ -347,7 +340,7 @@ time2 <- total.time[3] # the elapsed time
 
 ## Linear Discriminant Analysis - Lasso
 
-```{r, echo = F, message = F, comment = NA, cache=T}
+```{r, echo = F, message = F, comment = NA, cache=T, fig.height=2.5}
 ###########
 # Model 2=seismic+shift+gpuls+nbumps
 # LASSO Variable Selection
@@ -368,7 +361,7 @@ rate5.train <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(con
 pred <- prediction(lda.pred$posterior[,2], seismic.train$class) 
 perf_train <- performance(pred,"tpr","fpr")
 
-par(mfrow = c(1,2))
+par(mfrow = c(1,4))
 
 ## Roc Curve for Training
 plot(perf_train,colorize=TRUE, main="Train")
@@ -401,19 +394,17 @@ text(0.75, 0.35, "AUC", cex = .8)
 # Total time for this method
 total.time <- proc.time() - start.time
 time3 <- total.time[3] # the elapsed time
-
-# All system times for Full, Step and Lasso
-lda.times <- cbind(time1,time2, time3)
-lda.times
-
-# All missclassification rates for Logistic Regression
-lda.rates.train <- cbind(rate1.train,rate3.train,rate5.train)
-lda.rates.train
-lda.rates.test <- cbind(rate2.test,rate4.test,rate6.test)
-lda.rates.test
 ```
 
-# Quadratic Discriminant Analysis
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
+# All system times for Full, Step and Lasso
+lda.times <- matrix(c(time1,time2,time3,rate1.train,rate3.train,rate5.train,rate2.test,rate4.test,rate6.test),nrow=3,ncol=3, byrow=T)
+colnames(lda.times) <- c("Full", "Step", "Lasso")
+rownames(lda.times) <- c("Computing Time", "Train Error Rates", "Test Error Rates")
+kable(lda.times, caption="Linear Discriminant Analysis")
+```
+
+## 2.3 Quadratic Discriminant Analysis
 
 ## Full Model
 
@@ -421,7 +412,7 @@ Full Model not able to handle the multicollinearity of the data.
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, cache=T}
 ##--------------------------------------------
-## Linear Discriminant Analysis - Full Model 
+## Quadratic Discriminant Analysis - Full Model 
 ##--------------------------------------------
 
 #Full Model not able to handle the multicollinearity of the data.
@@ -429,7 +420,7 @@ Full Model not able to handle the multicollinearity of the data.
 
 ## Quadratic Discriminant Analysis - Step
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, cache=T}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
 
 ##-----------------------------------------
 ## Fit QDA model after variable selection
@@ -442,6 +433,7 @@ start.time <- proc.time()
 # Model 1 = genergy + gpuls + nbumps + nbumps2 + nbumps4
 # Step Variable Selection
 ###########
+par(mfrow = c(1,4))
 
 # Run Model 1 on Training Data
 qda.fit <- qda(class ~ genergy + gpuls + nbumps + nbumps2 + nbumps4, data=seismic.train)
@@ -457,8 +449,6 @@ rate1.train <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(con
 ## Roc curve setup
 pred <- prediction(qda.pred$posterior[,2], seismic.train$class) 
 perf_train <- performance(pred,"tpr","fpr")
-
-par(mfrow = c(1,2))
 
 ## Roc Curve for Training
 plot(perf_train,colorize=TRUE, main="Train")
@@ -492,11 +482,6 @@ text(0.75, 0.35, "AUC", cex = .8)
 total.time <- proc.time() - start.time
 time1 <- total.time[3] # the elapsed time
 
-```
-
-## Quadratic Discriminant Analysis - LASSO
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, cache=T}
 ###########
 # Model 2=seismic+shift+gpuls+nbumps
 # LASSO Variable Selection
@@ -519,8 +504,6 @@ rate3.train <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(con
 ## Roc curve setup
 pred <- prediction(qda.pred$posterior[,2], seismic.train$class) 
 perf_train <- performance(pred,"tpr","fpr")
-
-par(mfrow = c(1,2))
 
 ## Roc Curve for Training
 plot(perf_train,colorize=TRUE, main="Train")
@@ -553,21 +536,21 @@ text(0.75, 0.35, "AUC", cex = .8)
 # Total time for this method
 total.time <- proc.time() - start.time
 time2 <- total.time[3] # the elapsed time
-
-# All system times for Full, Step and Lasso
-qda.times <- cbind(time1,time2)
-qda.times
-
-# All missclassification rates for Logistic Regression
-qda.rates.train <- cbind(rate1.train,rate3.train,rate5.train)
-qda.rates.train
-qda.rates.test <- cbind(rate2.test,rate4.test,rate6.test)
-qda.rates.test
 ```
 
-# Regularized 
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
+# All system times for Full, Step and Lasso
+qda.times <- matrix(c("NA",time2,time3,"NA",rate3.train,rate5.train,"NA",rate4.test,rate6.test),nrow=3,ncol=3, byrow=T)
+colnames(qda.times) <- c("Full", "Step", "Lasso")
+rownames(qda.times) <- c("Computing Time", "Train Error Rates", "Test Error Rates")
+kable(qda.times, caption="Quadratic Discriminant Analysis")
+```
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, cache=T}
+## 2.4 Regularized Discriminant Analysis
+
+## Regularized Discriminant Analysis -Full Regularized Discriminant Analysis -Step
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
 ##--------------------------------------------
 ## Regularized Discriminant Analysis - Full Model 
 ##--------------------------------------------
@@ -591,7 +574,7 @@ rate1.train <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(con
 pred <- prediction(rda.pred$posterior[,2], seismic.train$class) 
 perf_train <- performance(pred,"tpr","fpr")
 
-par(mfrow = c(1,2))
+par(mfrow = c(1,4))
 
 ## Roc Curve for Training
 plot(perf_train,colorize=TRUE, main="Train")
@@ -624,11 +607,7 @@ text(0.75, 0.35, "AUC", cex = .8)
 # Total time for this method
 total.time <- proc.time() - start.time
 time1 <- total.time[3] # the elapsed time
-```
 
-## Regularized Discriminant Analysis - Step
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, cache=T}
 ###########
 # Model 1 = genergy + gpuls + nbumps + nbumps2 + nbumps4
 # Step Variable Selection
@@ -651,8 +630,6 @@ rate3.train <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(con
 ## Roc curve setup
 pred <- prediction(rda.pred$posterior[,2], seismic.train$class) 
 perf_train <- performance(pred,"tpr","fpr")
-
-par(mfrow = c(1,2))
 
 ## Roc Curve for Training
 plot(perf_train,colorize=TRUE, main="Train")
@@ -689,7 +666,7 @@ time2 <- total.time[3] # the elapsed time
 
 ## Regularized Discriminant Analysis - Lasso
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, cache=T}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2,cache=T}
 ###########
 # Model 2=seismic+shift+gpuls+nbumps
 # LASSO Variable Selection
@@ -712,7 +689,7 @@ rate5.train <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(con
 pred <- prediction(rda.pred$posterior[,2], seismic.train$class) 
 perf_train <- performance(pred,"tpr","fpr")
 
-par(mfrow = c(1,2))
+par(mfrow = c(1,4))
 
 ## Roc Curve for Training
 plot(perf_train,colorize=TRUE, main="Train")
@@ -745,19 +722,16 @@ text(0.75, 0.35, "AUC", cex = .8)
 # Total time for this method
 total.time <- proc.time() - start.time
 time3 <- total.time[3] # the elapsed time
-
-# All system times for Full, Step and Lasso
-rda.times <- cbind(time1,time2)
-rda.times
-
-# All missclassification rates for Logistic Regression
-rda.rates.train <- cbind(rate1.train,rate3.train,rate5.train)
-rda.rates.train
-rda.rates.test <- cbind(rate2.test,rate4.test,rate6.test)
-rda.rates.test
 ```
 
-<<<<<<< HEAD
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
+# All system times for Full, Step and Lasso
+rda.times <- matrix(c(time1,time2,time3,rate1.train,rate3.train,rate5.train,rate2.test,rate4.test,rate6.test),nrow=3,ncol=3, byrow=T)
+colnames(rda.times) <- c("Full", "Step", "Lasso")
+rownames(rda.times) <- c("Computing Time", "Train Error Rates", "Test Error Rates")
+kable(rda.times, caption="Regularized Discriminant Analysis")
+```
+
 # Boosting before variable selection
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, eval=T, cache=T}
