@@ -1164,10 +1164,10 @@ time7 <- total.time[3]
 
 # Support vector classifier and support vector machine
 
-```{r, cache=T}
+```{r, cache=T, echo = F}
 # Variable selection and refitting
-#model1 = genergy + gpuls + nbumps + nbumps2 + nbumps4 #Step
-#model2 = seismic + shift + gpuls + nbumps #Lasso
+#model1 = genergy + gpuls + nbumps + nbumps2 + nbumps4
+#model2 = seismic + shift + gpuls + nbumps
 
 library(e1071)
 
@@ -1304,7 +1304,7 @@ time4 <- total.time[3]
 
 start.time <- proc.time()
 
-tune.out4 <- tune(svm, factor(class)~genergy + gpuls + nbumps + nbumps2 + nbumps4, data = seismic[train,], kernel = "polynomial", ranges = list(cost = c(.001,.01,.1), degree = c(2,3,4)))
+tune.out4 <- tune(svm, factor(class)~genergy + gpuls + nbumps + nbumps2 + nbumps4, data = seismic[train,], kernel = "polynomial", ranges = list(cost = c(.001,.01,.1,1), degree = c(2,3)))
 
 bestmod <- tune.out4$best.model
 ypred <- predict(bestmod, seismic[-train,])
@@ -1326,7 +1326,7 @@ time5 <- total.time[3]
 
 start.time <- proc.time()
 
-tune.out5 <- tune(svm, factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "polynomial", ranges = list(cost = c(.001,.01,.1), degree = c(2,3,4)))
+tune.out5 <- tune(svm, factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "polynomial", ranges = list(cost = c(.001,.01,.1,1), degree = c(2,3)))
 
 bestmod <- tune.out5$best.model
 ypred <- predict(bestmod, seismic[-train,])
@@ -1341,8 +1341,17 @@ rocplot(fitted.test5, seismic[-train,"class"], main = "Test data")
 
 total.time <- proc.time() - start.time
 time6 <- total.time[3]
-
 ```
+
+||*Model 1*|||*Model 2*|||
+  |:------|-------:|-----:|----------:|-------:|-----:|----------:|
+  |*Kernel*|linear|radial|polynomial|linear|radial|polynomial|
+  |*cost*  |.001  |.001  |.001      |.001  |.001  |.001      |
+  |*gamma* |.2    |1     |.2        |.25   |1     |.25       |
+  |*degree*|N/A   |N/A   |2         |N/A   |N/A   |2         |
+  |*time*  |5.4   |26.47 |25.31     |2.44  |24.84 |7.51      |
+  |*misclassification rate*|.06|.06|.06|.06|.06|.06|
+
 
 # How to time your code!!!
 
