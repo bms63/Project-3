@@ -162,60 +162,11 @@ total.time <- proc.time() - start.time
 time2 <- total.time[3] # the elapsed time
 ```
 
-## Logistic Regression - Lasso Model
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
-###########
-# Model 2=seismic+shift+gpuls+nbumps
-# LASSO Variable Selection
-###########
-
-## Stating Timing Method
-start.time <- proc.time()
-
-## Lasso-model on train data
-glm.train <- glm(class~seismic+shift+gpuls+nbumps, seismic.train, family=binomial)
-
-##  predictions for train data
-glm.probs=predict(glm.train, type="response")
-glm.pred=rep("0",1938)
-glm.pred[glm.probs >.5]="1"
-
-# misclassification rate (FP+FN)/total
-confusion <- table(glm.pred ,seismic.train$class)
-rate5.train <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
-
-## Train Roc Curve.  Plotted at the end
-roc.Train <- roc(seismic.train$class, glm.probs, direction = "<")
-
-# Using Training Model2-Lasso model on Test Data
-glm.probs=predict(glm.train, seismic.test, type="response")
-
-## predictions for test data
-glm.pred=rep("0",646)
-glm.pred[glm.probs >.5]="1"
-
-# misclassification rate (FP+FN)/total
-confusion <- table(glm.pred ,seismic.test$class)
-rate6.test <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
-
-## Test Roc Curve.  Plotted at the end
-roc.Test <- roc(seismic.test$class, glm.probs, direction="<")
-
-# Plotting Roc Curves for Model 2
-par(mfrow = c(1,4))
-plot.roc(roc.Train, col="blue", auc.polygon=TRUE,main="Train-ROC-Lasso", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
-plot.roc(roc.Test, col="red", auc.polygon=TRUE,main="Test-ROC-Lasso", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
-
-# Total time for this method
-total.time <- proc.time() - start.time
-time3 <- total.time[3] # the elapsed time
-```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
 # All system times for Full, Step and Lasso
-log.reg <- matrix(c(time1,time2,time3,rate1.train,rate3.train,rate5.train,rate2.test,rate4.test,rate6.test),nrow=3,ncol=3, byrow=T)
-colnames(log.reg) <- c("Full", "Step", "Lasso")
+log.reg <- matrix(c(time1,time2,rate1.train,rate3.train,rate2.test,rate4.test),nrow=3,ncol=2, byrow=T)
+colnames(log.reg) <- c("Full", "Step")
 rownames(log.reg) <- c("Computing Time", "Train Error Rates", "Test Error Rates")
 kable(log.reg, caption="Logistic Regression")
 ```
@@ -338,68 +289,10 @@ total.time <- proc.time() - start.time
 time2 <- total.time[3] # the elapsed time
 ```
 
-## Linear Discriminant Analysis - Lasso
-
-```{r, echo = F, message = F, comment = NA, cache=T, fig.height=2.5}
-###########
-# Model 2=seismic+shift+gpuls+nbumps
-# LASSO Variable Selection
-###########
-
-# Stating Timing Method
-start.time <- proc.time()
-
-lda.fit <- lda(class~seismic+shift+gpuls+nbumps, data = seismic, subset = train)
-lda.pred <- predict(lda.fit, seismic.train)
-lda.class.train <- lda.pred$class
-
-# Misclassification rate (FP+FN)/total
-confusion <- table(lda.class.train,seismic.train$class)
-rate5.train <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
-
-## Roc curve setup
-pred <- prediction(lda.pred$posterior[,2], seismic.train$class) 
-perf_train <- performance(pred,"tpr","fpr")
-
-par(mfrow = c(1,4))
-
-## Roc Curve for Training
-plot(perf_train,colorize=TRUE, main="Train")
-abline(a=0, b= 1)
-perf_train <- performance(pred,"tpr","fpr",measure="auc")
-auc <- round(as.numeric(perf_train@y.values),5)
-text(0.75, 0.25, auc, cex = .8)
-text(0.75, 0.35, "AUC", cex = .8)
-
-## Prediction for Test
-lda.pred.test <- predict(lda.fit, seismic.test)
-lda.class.test <- lda.pred.test$class
-
-# Misclassification rate (FP+FN)/total
-confusion <- table(lda.class.test,seismic.test$class)
-rate6.test <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
-
-## Roc Curve setup
-pred <- prediction(lda.pred.test$posterior[,2], seismic.test$class) 
-perf_test <- performance(pred,"tpr","fpr")
-
-#Roc Curve for Test
-plot(perf_test,colorize=TRUE, main="Test")
-abline(a=0, b= 1)
-perf_test <- performance(pred,"tpr","fpr",measure="auc")
-auc <- round(as.numeric(perf_test@y.values),5)
-text(0.75, 0.25, auc, cex = .8)
-text(0.75, 0.35, "AUC", cex = .8)
-
-# Total time for this method
-total.time <- proc.time() - start.time
-time3 <- total.time[3] # the elapsed time
-```
-
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
 # All system times for Full, Step and Lasso
-lda.times <- matrix(c(time1,time2,time3,rate1.train,rate3.train,rate5.train,rate2.test,rate4.test,rate6.test),nrow=3,ncol=3, byrow=T)
-colnames(lda.times) <- c("Full", "Step", "Lasso")
+lda.times <- matrix(c(time1,time2,rate1.train,rate3.train,rate2.test,rate4.test),nrow=3,ncol=2, byrow=T)
+colnames(lda.times) <- c("Full", "Step")
 rownames(lda.times) <- c("Computing Time", "Train Error Rates", "Test Error Rates")
 kable(lda.times, caption="Linear Discriminant Analysis")
 ```
@@ -540,7 +433,7 @@ time2 <- total.time[3] # the elapsed time
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
 # All system times for Full, Step and Lasso
-qda.times <- matrix(c("NA",time2,time3,"NA",rate3.train,rate5.train,"NA",rate4.test,rate6.test),nrow=3,ncol=3, byrow=T)
+qda.times <- matrix(c("NA",time1,time2,rate1.train,rate3.train,"NA",rate2.test,rate4.test),nrow=3,ncol=3, byrow=T)
 colnames(qda.times) <- c("Full", "Step", "Lasso")
 rownames(qda.times) <- c("Computing Time", "Train Error Rates", "Test Error Rates")
 kable(qda.times, caption="Quadratic Discriminant Analysis")
@@ -664,70 +557,10 @@ total.time <- proc.time() - start.time
 time2 <- total.time[3] # the elapsed time
 ```
 
-## Regularized Discriminant Analysis - Lasso
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2,cache=T}
-###########
-# Model 2=seismic+shift+gpuls+nbumps
-# LASSO Variable Selection
-###########
-# Stating Timing Method
-start.time <- proc.time()
-rda.fit <- rda(class~seismic+shift+gpuls+nbumps, data=seismic.train)
-
-## Using FULL model on TRAIN Data
-rda.pred=predict(rda.fit, seismic.train, type="response")
-rda.class.train <- rda.pred$class
-posterior.train <- rda.pred$posterior
-truth.train <- seismic.train$class
-
-# Misclassification rate (FP+FN)/total
-confusion <- table(rda.class.train,seismic.train$class)
-rate5.train <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
-
-## Roc curve setup
-pred <- prediction(rda.pred$posterior[,2], seismic.train$class) 
-perf_train <- performance(pred,"tpr","fpr")
-
-par(mfrow = c(1,4))
-
-## Roc Curve for Training
-plot(perf_train,colorize=TRUE, main="Train")
-abline(a=0, b= 1)
-perf_train <- performance(pred,"tpr","fpr",measure="auc")
-auc <- round(as.numeric(perf_train@y.values),5)
-text(0.75, 0.25, auc, cex = .8)
-text(0.75, 0.35, "AUC", cex = .8)
-
-## Prediction for Test
-rda.pred.test <- predict(rda.fit, seismic.test)
-rda.class.test <- rda.pred.test$class
-
-# Misclassification rate (FP+FN)/total
-confusion <- table(rda.class.test,seismic.test$class)
-rate6.test <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
-
-## Roc Curve setup
-pred <- prediction(rda.pred.test$posterior[,2], seismic.test$class) 
-perf_test <- performance(pred,"tpr","fpr")
-
-#Roc Curve for Test
-plot(perf_test,colorize=TRUE, main="Test")
-abline(a=0, b= 1)
-perf_test <- performance(pred,"tpr","fpr",measure="auc")
-auc <- round(as.numeric(perf_test@y.values),5)
-text(0.75, 0.25, auc, cex = .8)
-text(0.75, 0.35, "AUC", cex = .8)
-
-# Total time for this method
-total.time <- proc.time() - start.time
-time3 <- total.time[3] # the elapsed time
-```
-
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
 # All system times for Full, Step and Lasso
-rda.times <- matrix(c(time1,time2,time3,rate1.train,rate3.train,rate5.train,rate2.test,rate4.test,rate6.test),nrow=3,ncol=3, byrow=T)
-colnames(rda.times) <- c("Full", "Step", "Lasso")
+rda.times <- matrix(c(time1,time2,rate1.train,rate3.train,rate2.test,rate4.test),nrow=3,ncol=2, byrow=T)
+colnames(rda.times) <- c("Full", "Step")
 rownames(rda.times) <- c("Computing Time", "Train Error Rates", "Test Error Rates")
 kable(rda.times, caption="Regularized Discriminant Analysis")
 ```
@@ -1015,10 +848,6 @@ varImpPlot(rf.seismic)
 
 ## RF Classification AFTER Variable Selection 
 
-
-
-## RF Classification AFTER Variable Selection 
-
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, cache=T}
 
 #--------------------------------------------------------
@@ -1136,10 +965,10 @@ library(e1071)
 # Get the ROC curve for svm
 library(ROCR)
 
-rocplot <- function(pred, truth, add = F,...){
+rocplot <- function(pred, truth, ...){
   predob <- prediction(pred, truth)
   perf <- performance(predob, "tpr", "fpr")
-  plot(perf, add = add,...)
+  plot(perf,...)
 }
 #--------------------------------------------------
 
@@ -1169,8 +998,8 @@ fitted.test1 <- attributes(predict(svmfit.best1, seismic[-train,], decision.valu
 
 # It is unsurprising that this doesn't work well, because we are using a linear classifier
 # However, we have reason to believe that a non-linear classifier would be more appropriate
-#rocplot(fitted1, seismic[train,"class"], main = "Training data")
-#rocplot(fitted.test1, seismic[-train,"class"], main = "Test data")
+rocplot(fitted1, seismic[train,"class"], main = "Training data")
+rocplot(fitted.test1, seismic[-train,"class"], main = "Test data")
 
 total.time <- proc.time() - start.time
 time1 <- total.time[3]
@@ -1179,29 +1008,29 @@ time1 <- total.time[3]
 ## Model 2
 ##
 
-#start.time <- proc.time()
+start.time <- proc.time()
 
-#tune.out <- tune(svm, factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "linear", ranges = list(cost = #c(.001,.01,.1,1,5)))
+tune.out <- tune(svm, factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "linear", ranges = list(cost = c(.001,.01,.1,1,5)))
 
 # Look for a best model
-#summary(tune.out)
-#bestmod <- tune.out$best.model
-#summary(bestmod)
+summary(tune.out)
+bestmod <- tune.out$best.model
+summary(bestmod)
 
-#ypred <- predict(bestmod, seismic[-train,])
-#table(predict = ypred, truth = seismic$class[-train])
+ypred <- predict(bestmod, seismic[-train,])
+table(predict = ypred, truth = seismic$class[-train])
 
-#svmfit.best2 <- svm(factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "linear", cost = bestmod$cost, #decision.values = T)
-#fitted2 <- attributes(predict(svmfit.best2, seismic[train,], decision.values = T))$decision.values
-#fitted.test2 <- attributes(predict(svmfit.best2, seismic[-train,], decision.values = T))$decision.values
+svmfit.best2 <- svm(factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "linear", cost = bestmod$cost, decision.values = T)
+fitted2 <- attributes(predict(svmfit.best2, seismic[train,], decision.values = T))$decision.values
+fitted.test2 <- attributes(predict(svmfit.best2, seismic[-train,], decision.values = T))$decision.values
 
 # This one shows a much better ROC curve
 # But it still looks bad just from the original table produced
-#rocplot(fitted2, seismic[train,"class"], main = "Training data")
-#rocplot(fitted.test2, seismic[-train,"class"], main = "Test data")
+rocplot(fitted2, seismic[train,"class"], main = "Training data")
+rocplot(fitted.test2, seismic[-train,"class"], main = "Test data")
 
-#total.time <- proc.time() - start.time
-#time2 <- total.time[3]
+total.time <- proc.time() - start.time
+time2 <- total.time[3]
 
 #--------------------------------------------------
 # Implement with the radial kernel
@@ -1223,8 +1052,8 @@ svmrad2 <- svm(factor(class)~genergy + gpuls + nbumps + nbumps2 + nbumps4, data 
 fitted2 <- attributes(predict(svmrad2, seismic[train,], decision.values = T))$decision.values
 fitted.test2 <- attributes(predict(svmrad2, seismic[-train,],decision.values = T))$decision.values
 
-#rocplot(fitted2, seismic[train,"class"], main = "Training data")
-#rocplot(fitted.test2, seismic[-train,"class"], main = "Test data")
+rocplot(fitted2, seismic[train,"class"], main = "Training data")
+rocplot(fitted.test2, seismic[-train,"class"], main = "Test data")
 
 total.time <- proc.time() - start.time
 time3 <- total.time[3]
@@ -1233,23 +1062,23 @@ time3 <- total.time[3]
 ## Model 2
 ##
 
-#start.time <- proc.time()
+start.time <- proc.time()
 
-#tune.out3 <- tune(svm, factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "radial", ranges = list(cost = c(.001,.01,.1), gamma = c(1,5,50)))
+tune.out3 <- tune(svm, factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "radial", ranges = list(cost = c(.001,.01,.1), gamma = c(1,5,50)))
 
-#bestmod <- tune.out3$best.model
-#ypred <- predict(bestmod, seismic[-train,])
-#table(predict = ypred, truth = seismic$class[-train])
+bestmod <- tune.out3$best.model
+ypred <- predict(bestmod, seismic[-train,])
+table(predict = ypred, truth = seismic$class[-train])
 
-#svmrad3 <- svm(factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "radial", gamma = #tune.out3$best.model$gamma, cost = tune.out3$best.model$cost, decision.values = T)
-#fitted3 <- attributes(predict(svmrad3, seismic[train,], decision.values = T))$decision.values
-#fitted.test3 <- attributes(predict(svmrad3, seismic[-train,],decision.values = T))$decision.values
+svmrad3 <- svm(factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "radial", gamma = tune.out3$best.model$gamma, cost = tune.out3$best.model$cost, decision.values = T)
+fitted3 <- attributes(predict(svmrad3, seismic[train,], decision.values = T))$decision.values
+fitted.test3 <- attributes(predict(svmrad3, seismic[-train,],decision.values = T))$decision.values
 
-#rocplot(fitted3, seismic[train,"class"], main = "Training data")
-#rocplot(fitted.test3, seismic[-train,"class"], main = "Test data")
+rocplot(fitted3, seismic[train,"class"], main = "Training data")
+rocplot(fitted.test3, seismic[-train,"class"], main = "Test data")
 
-#total.time <- proc.time() - start.time
-#time4 <- total.time[3]
+total.time <- proc.time() - start.time
+time4 <- total.time[3]
 
 #--------------------------------------------------
 # Implement with the polynomial kernel
@@ -1271,8 +1100,8 @@ svmpoly4 <- svm(factor(class)~genergy + gpuls + nbumps + nbumps2 + nbumps4, data
 fitted4 <- attributes(predict(svmpoly4, seismic[train,], decision.values = T))$decision.values
 fitted.test4 <- attributes(predict(svmpoly4, seismic[-train,],decision.values = T))$decision.values
 
-#rocplot(fitted4, seismic[train,"class"], main = "Training data")
-#rocplot(fitted.test4, seismic[-train,"class"], main = "Test data")
+rocplot(fitted4, seismic[train,"class"], main = "Training data")
+rocplot(fitted.test4, seismic[-train,"class"], main = "Test data")
 
 total.time <- proc.time() - start.time
 time5 <- total.time[3]
@@ -1281,54 +1110,107 @@ time5 <- total.time[3]
 ## Model 2
 ##
 
-#start.time <- proc.time()
+start.time <- proc.time()
 
-#tune.out5 <- tune(svm, factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "polynomial", ranges = #list(cost = c(.001,.01,.1,1), degree = c(2,3)))
+tune.out5 <- tune(svm, factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "polynomial", ranges = list(cost = c(.001,.01,.1,1), degree = c(2,3)))
 
-#bestmod <- tune.out5$best.model
-#ypred <- predict(bestmod, seismic[-train,])
-#table(predict = ypred, truth = seismic$class[-train])
+bestmod <- tune.out5$best.model
+ypred <- predict(bestmod, seismic[-train,])
+table(predict = ypred, truth = seismic$class[-train])
 
-#svmpoly5 <- svm(factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "polynomial", cost = #tune.out5$best.model$cost, degree = tune.out5$best.model$degree, decision.values = T)
-#fitted5 <- attributes(predict(svmpoly5, seismic[train,], decision.values = T))$decision.values
-#fitted.test5 <- attributes(predict(svmpoly5, seismic[-train,],decision.values = T))$decision.values
+svmpoly5 <- svm(factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "polynomial", cost = tune.out5$best.model$cost, degree = tune.out5$best.model$degree, decision.values = T)
+fitted5 <- attributes(predict(svmpoly5, seismic[train,], decision.values = T))$decision.values
+fitted.test5 <- attributes(predict(svmpoly5, seismic[-train,],decision.values = T))$decision.values
 
-#rocplot(fitted5, seismic[train,"class"], main = "Training data")
-#rocplot(fitted.test5, seismic[-train,"class"], main = "Test data")
+rocplot(fitted5, seismic[train,"class"], main = "Training data")
+rocplot(fitted.test5, seismic[-train,"class"], main = "Test data")
 
-#total.time <- proc.time() - start.time
-#time6 <- total.time[3]
+total.time <- proc.time() - start.time
+time6 <- total.time[3]
+```
 
-#||*Model 1*|||*Model 2*|||
-#  |:------|-------:|-----:|----------:|-------:|-----:|----------:|
-#  |*Kernel*|linear|radial|polynomial|linear|radial|polynomial|
-#  |*cost*  |.001  |.001  |.001      |.001  |.001  |.001      |
-#  |*gamma* |.2    |1     |.2        |.25   |1     |.25       |
-#  |*degree*|N/A   |N/A   |2         |N/A   |N/A   |2         |
-#  |*time*  |5.4   |26.47 |25.31     |2.44  |24.84 |7.51      |
-#  |*misclassification rate*|.06|.06|.06|.06|.06|.06|
+||*Model 1*|||*Model 2*|||
+  |:------|-------:|-----:|----------:|-------:|-----:|----------:|
+  |*Kernel*|linear|radial|polynomial|linear|radial|polynomial|
+  |*cost*  |.001  |.001  |.001      |.001  |.001  |.001      |
+  |*gamma* |.2    |1     |.2        |.25   |1     |.25       |
+  |*degree*|N/A   |N/A   |2         |N/A   |N/A   |2         |
+  |*time*  |5.4   |26.47 |25.31     |2.44  |24.84 |7.51      |
+  |*misclassification rate*|.06|.06|.06|.06|.06|.06|
+
+
+# How to time your code!!!
+
+```{r}
+#-------------------------------------
+# How to time your method
+#-------------------------------------
+
+# Put this before your method
+start.time <- proc.time()
+
+## the thing you are computing, like random forest or SVM goes here ##
+
+total.time <- proc.time() - start.time
+
+total.time[3] # the elapsed time
 
 ```
 
-```{r, echo = F, message = F, warning = F, fig.height = 4, fig.width=11, fig.cap = "ROC curves for SVM, where training is in blue, test in brown."}
-library(ROCR)
-par(mfrow = c(1,3))
-rocplot(fitted1, seismic[train,"class"], main = "ROC for Linear Kernel", col = "dark cyan")
-rocplot(fitted.test1, seismic[-train,"class"], add = T, col = "coral3")
+# Appendix
 
-rocplot(fitted2, seismic[train,"class"], main = "ROC for Radial Kernel", col = "dark cyan")
-rocplot(fitted.test2, seismic[-train,"class"], add = T, col = "coral3")
+### Table I. Attribute information of the seismic-bumps dataset
 
-rocplot(fitted4, seismic[train,"class"], main = "ROC for Polynomial Kernel", col = "dark cyan")
-rocplot(fitted.test4, seismic[-train,"class"], add = T, col = "coral3")
+ | Data Attributes | Description | Data Types | 
+| -----------|-------------------------------------------------|----------|
+| seismic   | result of shift seismic hazard assessment: 'a' - lack of hazard, 'b' - low hazard, 'c' - high hazard, 'd' - danger state  | Categorical   |
+| seismoacoustic | result of shift seismic hazard assessment | Categorical  | 
+| shift  | type of a shift: 'W' - coal-getting, 'N' - preparation shift  | Categorical  | 
+| genergy  | seismic energy recorded within previous shift by active geophones (GMax) monitoring the longwall | Continuous  | 
+| gpuls  | number of pulses recorded within previous shift by GMax | Continuous |
+| gdenergy  | deviation of recorded energy within previous shift from average energy recorded during eight previous shifts  | Continuous  | 
+| gdpuls | deviation of recorded pulses within previous shift from average number of pulses recorded during eight previous shifts  | Continuous  | 
+| ghazard  | result of shift seismic hazard assessment by the seismoacoustic method based on registration coming from GMax  | Categorical | 
+| nbumps   | the number of seismic bumps recorded within previous shift | Continuous  | 
+| nbumps$i$, $i\in\{1,\ldots,5\}$  | the number of seismic bumps ($10^i-10^{i+1}$ J) registered within previous shift | Continuous  | 
+| energy   | total energy of seismic bumps registered within previous shift  | Continuous  | 
+| maxenergy  | maximum energy of the seismic bumps registered within previous shift  | Continuous  | 
+| class  | the decision attribute: '1' - high energy seismic bump occurred in the next shift ('hazardous state'), '0' - no high energy seismic bumps occurred in th next shift ('non-hazardous state') | Categorical   | 
 
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height = 3}
+##---------------------------------------------
+## Some quick EDA from Hillary
+##---------------------------------------------
+
+setwd("/Users/benStraub/Desktop/557/Project-3")
+seismic <- read.csv("seismic.csv")
+par(mfrow=c(1,2))
+
+seismic[,c(4:7,9:13,17:18)] <- seismic[,c(4:7,9:13,17:18)]
+seismic <- seismic[,-(14:16)]
+
+for(i in c(1:3,8)){
+  seismic[,i] <- as.numeric(seismic[,i])
+}
+
+fit <- lm(class~., data = seismic)
+
+#for(i in c(4:7,9:15)){
+#  eval(parse(text = paste0("qqnorm(seismic$",names(seismic)[i],")")))
+#  eval(parse(text = paste0("qqline(seismic$",names(seismic)[i],", col = 2)")))
+#}
+
+res <- fit$residuals
+fitvals <- fit$fitted
+plot(fitvals, res, xlab = "Fitted Values", ylab = "Residuals")
+abline(h=0, col = 'red')
+hist(res, xlab = "Residuals", main = "")
+
+par(mfrow=c(2,2))
+
+x <- seismic[c(-1,-2,-3,-8,-14,-15,-16,-19)]
+
+vifs <- round(as.data.frame(t(vif(fit))),2)
+kable(vifs[1:7], caption="Table II-VIFs of Linear Model")
+kable(vifs[8:15], caption="Table II-VIFs of Linear Model")
 ```
-
-|*Stepwise Model*       || ||
-|:------|-------:|-----:|--------:|
-|*Kernel*|linear|radial|polynomial|
-|*cost*  |.001  |.001  |.001      |
-|*gamma* |.2    |1     |.2        |
-|*degree*|N/A   |N/A   |2         |
-|*time*  |5.4   |26.47 |25.31     |
-|*misclassification rate*|.06|.06|.06|
