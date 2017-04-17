@@ -7,13 +7,15 @@ output: pdf_document
 
 # Introduction  
  
-Mining activity has long been associated with mining hazards, such as fires, floods, and toxic contaminants (Dozolme, P., 2016). Among these hazards, seismic hazards are the hardest to detect and predict (Sikora & Wróbel, 2010). Minimizing loss from seismic hazards requires both advanced data collection and analysis. In recent years, more and more advanced seismic and seismoacoustic monitoring systems have come about. Still, the disproportionate number of low-energy versus high-energy seismic phenomena (e.g. > $10^4$J) renders traditional analysis methods insufficient.
+Mining activity has long been associated with mining hazards, such as fires, floods, and toxic contaminants (Dozolme, P., 2016). Among these hazards, seismic hazards are the hardest to detect and predict (Sikora & Wróbel, 2010). Minimizing loss from seismic hazards requires advanced data collection and analysis. In recent years, more and more advanced seismic and seismoacoustic monitoring systems have come about. Still, the disproportionate number of low-energy versus high-energy seismic phenomena (e.g. > $10^4$J) renders traditional analysis methods insufficient.
 
-In this project, we used the seismic-bumps dataset provided by Sikora & Wróbel (2010), found in the UCI Machine Learning Repository. This seismic-bumps dataset comes from a coal mine located in Poland and contains 2584 observations of 19 attributes. Each observation summarizes seismic activity in the rock mass within one 8-hour shift. Note that the decision attribute, named "class", has values 1 and 0. This variable is the response variable we use in this project. A class value of "1" is categorized as "hazardous state", which essentially indicates a registered seismic bump with high energy (>$10^4$J) in the next shift. A class value "0" represents non-hazardous state in the next shift. According to Bukowska (2006), a number of factors having an effect on seismic hazard occurrence were proposed. Among other factors, the occurrence of tremors with energy > $10^4$J was listed. Table 1 in the Appendix has a listing of all 18 variables and their descriptions. 
+To investigate these seismic hazards and explore more advance analysis technique we used the seismic-bumps dataset provided by Sikora & Wróbel (2010), found in the UCI Machine Learning Repository. This seismic-bumps dataset comes from a coal mine located in Poland and contains 2584 observations of 19 attributes. Each observation summarizes seismic activity in the rock mass within one 8-hour shift. Note that the decision attribute, named "class", has values 1 and 0. This variable is the response variable we use in this project. A class value of "1" is categorized as "hazardous state", which essentially indicates a registered seismic bump with high energy (>$10^4$J) in the next shift. A class value "0" represents non-hazardous state in the next shift.  Table 1 in the Appendix has a listing of all 18 variables and their descriptions. 
 
-The purpose of this project is to find whether and how the other 18 variables can be used to determine the hazard status of the mine.  In project 2, we utlized techniques such as the indicator matrix linear regression, logistic regression, linear discriminant analysis(LDA), quadratic discriminant qnalysis (QDA), and regularized discriminant analysis (RDA) to try and find a model that would accurately predict the hazardous state.  Unfortunately, all of the five project two methods performed poorly.  We felt that two major issues were at hand for this poor performance of the five methods. First, the low incidences of "1's" in the response variable class, which indicates a hazardous state in the mine.  Only 170 "1's" for class out of 2584 were observed.  A difficult problem for our analyses. The second issue was multicollinearity. Regression diagnostics indicate that the data, in general, meet most assumptions. However, we see that that data are somewhat skewed right, and there is severe multicollinearity (VIF > 10) between some of the covariates.  Table 2 in the Appendix contains VIF's for the linear regression model.  
+The purpose of this project is to find whether and how the other 18 variables can be used to determine the hazard status of the mine.  In project 2, we utlized techniques such as the indicator matrix linear regression, logistic regression, linear discriminant analysis(LDA), quadratic discriminant qnalysis (QDA), and regularized discriminant analysis (RDA) to try and find a model that would accurately predict the hazardous state.  Unfortunately, all of the five project two methods performed poorly.  We felt that there were two major issues at hand for this poor performance of the five methods. First, the low incidences of "1's" in the response variable class, which indicates a hazardous state in the mine.  Only 170 "1's" for class out of 2584 were observed.  A difficult problem for traditional method of analyses. The second issue was multicollinearity. Regression diagnostics indicate that the data, in general, meet most assumptions. However, we see that that data are somewhat skewed right, and there is severe multicollinearity (VIF > 10) between some of the covariates.  Table 2 in the Appendix contains VIF's for the linear regression model.  
 
-Multicollinearity can be address by dimension reduction techniques such as PCA,  step-wise regression, LASSO and ridge.  In project 2, we utilized step-wise regression and LASSO to arrive at two candidate models.
+Multicollinearity can be address by dimension reduction techniques such as PCA,  step-wise regression, LASSO or ridge.  In project 2, we utilized step-wise regression and LASSO to arrive at two candidate models.  However, even with these dimension reduction techniques our models still performed poorly.  Hopefully, to remedy this poor performance, we can utilize more advance techniques such as Boosting, Random Forest or Support Vector Machines.
+
+In section 2, we report ROC curves and missclassification rates for Logistic Regression, LDA, QDA and RDA.  In section 3, we report __best technique__ out of the three that we tried.  In section 4, we provide concluding remarks as well as future work on seismic data.
 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
@@ -29,16 +31,12 @@ setwd("/Users/benStraub/Desktop/557/Project-3")
 seismic <- read.csv("seismic.csv")
 ```
 
-
-# Exploratory Data Analysis 
+# 2 Logistic Regression, LDA, QDA, RDA 
  
-The state of the mine was indeed deemed hazardous infrequently $-$ only 170 shifts out of 2584 $-$ a difficult problem in our analyses. We want to examine which observations of seismic activity can help in the prediction of the hazard state of the mine during the next shift. Regression diagnostics indicate that the data, in general, meet most assumptions. However, we see that that data are somewhat skewed right, and there is severe multicollinearity (VIF > 10) between some of the covariates, as shown below.
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height = 3}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 ##---------------------------------------------
 ## 
 ##---------------------------------------------
-
 par(mfrow=c(1,2))
 
 seismic[,c(4:7,9:13,17:18)] <- seismic[,c(4:7,9:13,17:18)]
@@ -47,12 +45,8 @@ seismic <- seismic[,-(14:16)]
 for(i in c(1:3,8)){
   seismic[,i] <- as.numeric(seismic[,i])
 }
-
 ```
 
-# Classification before Variable Selection 
-
-We first take the seismic-bumps dataset and partition the data into training (75%) and test (25%) datasets. The next steps involve examining multiple classification methods on the training and test datasets separately. The goal is to examine which classification method outputs comparatively better prediction for seismic hazards based on available predictors.
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 ##------------------------------------
@@ -71,11 +65,9 @@ seismic.test <- seismic[test,]
 
 ```
 
-# Logistic Regression
+## Logistic Regression-Full Model  Logistic Regression - Step Model
 
-## Full Model
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2}
 
 # Stating Timing Method
 start.time <- proc.time()
@@ -112,18 +104,13 @@ rate2.test <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(conf
 roc.Test <- roc(seismic.test$class, glm.probs, direction="<")
 
 ## Plotting Test and Train ROC with AUC
-par(mfrow = c(1,2))
+par(mfrow = c(1,4))
 plot.roc(roc.Train, col="blue", auc.polygon=TRUE,main="Train-ROC-Full", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
 plot.roc(roc.Test, col="red", auc.polygon=TRUE,main="Test-Roc-Full", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
 
 # Total time for this method
 total.time <- proc.time() - start.time
 time1 <- total.time[3] # the elapsed time
-```
-
-## Logistic Regression - Step Model
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 
 ##--------------------------------------------
 ## Logistic Regression - Post-Variable Selection
@@ -167,7 +154,6 @@ rate4.test <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(conf
 roc.Test <- roc(seismic.test$class, glm.probs, direction="<")
 
 # Plotting Roc Curves for Model 1/Step-Model
-par(mfrow = c(1,2))
 plot.roc(roc.Train, col="blue", auc.polygon=TRUE,main="Train-ROC-Step", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
 plot.roc(roc.Test, col="red", auc.polygon=TRUE,main="Test-ROC-Step", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
 
@@ -178,7 +164,7 @@ time2 <- total.time[3] # the elapsed time
 
 ## Logistic Regression - Lasso Model
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, cache=T}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
 ###########
 # Model 2=seismic+shift+gpuls+nbumps
 # LASSO Variable Selection
@@ -217,28 +203,25 @@ rate6.test <- round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(conf
 roc.Test <- roc(seismic.test$class, glm.probs, direction="<")
 
 # Plotting Roc Curves for Model 2
-par(mfrow = c(1,2))
+par(mfrow = c(1,4))
 plot.roc(roc.Train, col="blue", auc.polygon=TRUE,main="Train-ROC-Lasso", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
 plot.roc(roc.Test, col="red", auc.polygon=TRUE,main="Test-ROC-Lasso", xlab="False Positive Rate", ylab="True Positive Rate", print.auc=TRUE)
 
 # Total time for this method
 total.time <- proc.time() - start.time
 time3 <- total.time[3] # the elapsed time
-
-# All system times for Full, Step and Lasso
-log.reg.times <- cbind(time1,time2, time3)
-log.reg.times
-
-# All missclassification rates for Logistic Regression
-log.reg.rates.train <- cbind(rate1.train,rate3.train,rate5.train)
-log.reg.rates.train
-log.reg.rates.test <- cbind(rate2.test,rate4.test,rate6.test)
-log.reg.rates.test
 ```
 
-# Linear Discriminant Analysis
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
+# All system times for Full, Step and Lasso
+log.reg <- matrix(c(time1,time2,time3,rate1.train,rate3.train,rate5.train,rate2.test,rate4.test,rate6.test),nrow=3,ncol=3)
+colnames(log.reg) <- c("Full", "Step", "Lasso")
+rownames(log.reg) <- c("Computing Time", "Train Error Rates", "Test Error Rates")
+kable(log.reg, caption="Logistic Regression")
+```
 
-## Full Model
+# Discriminant Analysis
+Full Model
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, cache=T}
 
