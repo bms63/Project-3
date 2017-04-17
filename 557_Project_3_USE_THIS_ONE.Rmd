@@ -1205,29 +1205,29 @@ time1 <- total.time[3]
 ## Model 2
 ##
 
-start.time <- proc.time()
+#start.time <- proc.time()
 
-tune.out <- tune(svm, factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "linear", ranges = list(cost = c(.001,.01,.1,1,5)))
+#tune.out <- tune(svm, factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "linear", ranges = list(cost = #c(.001,.01,.1,1,5)))
 
 # Look for a best model
-summary(tune.out)
-bestmod <- tune.out$best.model
-summary(bestmod)
+#summary(tune.out)
+#bestmod <- tune.out$best.model
+#summary(bestmod)
 
-ypred <- predict(bestmod, seismic[-train,])
-table(predict = ypred, truth = seismic$class[-train])
+#ypred <- predict(bestmod, seismic[-train,])
+#table(predict = ypred, truth = seismic$class[-train])
 
-svmfit.best2 <- svm(factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "linear", cost = bestmod$cost, decision.values = T)
-fitted2 <- attributes(predict(svmfit.best2, seismic[train,], decision.values = T))$decision.values
-fitted.test2 <- attributes(predict(svmfit.best2, seismic[-train,], decision.values = T))$decision.values
+#svmfit.best2 <- svm(factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "linear", cost = bestmod$cost, #decision.values = T)
+#fitted2 <- attributes(predict(svmfit.best2, seismic[train,], decision.values = T))$decision.values
+#fitted.test2 <- attributes(predict(svmfit.best2, seismic[-train,], decision.values = T))$decision.values
 
 # This one shows a much better ROC curve
 # But it still looks bad just from the original table produced
-rocplot(fitted2, seismic[train,"class"], main = "Training data")
-rocplot(fitted.test2, seismic[-train,"class"], main = "Test data")
+#rocplot(fitted2, seismic[train,"class"], main = "Training data")
+#rocplot(fitted.test2, seismic[-train,"class"], main = "Test data")
 
-total.time <- proc.time() - start.time
-time2 <- total.time[3]
+#total.time <- proc.time() - start.time
+#time2 <- total.time[3]
 
 #--------------------------------------------------
 # Implement with the radial kernel
@@ -1259,23 +1259,23 @@ time3 <- total.time[3]
 ## Model 2
 ##
 
-start.time <- proc.time()
+#start.time <- proc.time()
 
-tune.out3 <- tune(svm, factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "radial", ranges = list(cost = c(.001,.01,.1), gamma = c(1,5,50)))
+#tune.out3 <- tune(svm, factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "radial", ranges = list(cost = c(.001,.01,.1), gamma = c(1,5,50)))
 
-bestmod <- tune.out3$best.model
-ypred <- predict(bestmod, seismic[-train,])
-table(predict = ypred, truth = seismic$class[-train])
+#bestmod <- tune.out3$best.model
+#ypred <- predict(bestmod, seismic[-train,])
+#table(predict = ypred, truth = seismic$class[-train])
 
-svmrad3 <- svm(factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "radial", gamma = tune.out3$best.model$gamma, cost = tune.out3$best.model$cost, decision.values = T)
-fitted3 <- attributes(predict(svmrad3, seismic[train,], decision.values = T))$decision.values
-fitted.test3 <- attributes(predict(svmrad3, seismic[-train,],decision.values = T))$decision.values
+#svmrad3 <- svm(factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "radial", gamma = #tune.out3$best.model$gamma, cost = tune.out3$best.model$cost, decision.values = T)
+#fitted3 <- attributes(predict(svmrad3, seismic[train,], decision.values = T))$decision.values
+#fitted.test3 <- attributes(predict(svmrad3, seismic[-train,],decision.values = T))$decision.values
 
-rocplot(fitted3, seismic[train,"class"], main = "Training data")
-rocplot(fitted.test3, seismic[-train,"class"], main = "Test data")
+#rocplot(fitted3, seismic[train,"class"], main = "Training data")
+#rocplot(fitted.test3, seismic[-train,"class"], main = "Test data")
 
-total.time <- proc.time() - start.time
-time4 <- total.time[3]
+#total.time <- proc.time() - start.time
+#time4 <- total.time[3]
 
 #--------------------------------------------------
 # Implement with the polynomial kernel
@@ -1307,52 +1307,45 @@ time5 <- total.time[3]
 ## Model 2
 ##
 
-start.time <- proc.time()
+#start.time <- proc.time()
 
-tune.out5 <- tune(svm, factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "polynomial", ranges = list(cost = c(.001,.01,.1,1), degree = c(2,3)))
+#tune.out5 <- tune(svm, factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "polynomial", ranges = #list(cost = c(.001,.01,.1,1), degree = c(2,3)))
 
-bestmod <- tune.out5$best.model
-ypred <- predict(bestmod, seismic[-train,])
-table(predict = ypred, truth = seismic$class[-train])
+#bestmod <- tune.out5$best.model
+#ypred <- predict(bestmod, seismic[-train,])
+#table(predict = ypred, truth = seismic$class[-train])
 
-svmpoly5 <- svm(factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "polynomial", cost = tune.out5$best.model$cost, degree = tune.out5$best.model$degree, decision.values = T)
-fitted5 <- attributes(predict(svmpoly5, seismic[train,], decision.values = T))$decision.values
-fitted.test5 <- attributes(predict(svmpoly5, seismic[-train,],decision.values = T))$decision.values
+#svmpoly5 <- svm(factor(class)~seismic + shift + gpuls + nbumps, data = seismic[train,], kernel = "polynomial", cost = #tune.out5$best.model$cost, degree = tune.out5$best.model$degree, decision.values = T)
+#fitted5 <- attributes(predict(svmpoly5, seismic[train,], decision.values = T))$decision.values
+#fitted.test5 <- attributes(predict(svmpoly5, seismic[-train,],decision.values = T))$decision.values
 
-rocplot(fitted5, seismic[train,"class"], main = "Training data")
-rocplot(fitted.test5, seismic[-train,"class"], main = "Test data")
+#rocplot(fitted5, seismic[train,"class"], main = "Training data")
+#rocplot(fitted.test5, seismic[-train,"class"], main = "Test data")
 
-total.time <- proc.time() - start.time
-time6 <- total.time[3]
-```
+#total.time <- proc.time() - start.time
+#time6 <- total.time[3]
 
-||*Model 1*|||*Model 2*|||
-  |:------|-------:|-----:|----------:|-------:|-----:|----------:|
-  |*Kernel*|linear|radial|polynomial|linear|radial|polynomial|
-  |*cost*  |.001  |.001  |.001      |.001  |.001  |.001      |
-  |*gamma* |.2    |1     |.2        |.25   |1     |.25       |
-  |*degree*|N/A   |N/A   |2         |N/A   |N/A   |2         |
-  |*time*  |5.4   |26.47 |25.31     |2.44  |24.84 |7.51      |
-  |*misclassification rate*|.06|.06|.06|.06|.06|.06|
-
-
-# How to time your code!!!
-
-```{r}
-#-------------------------------------
-# How to time your method
-#-------------------------------------
-
-# Put this before your method
-start.time <- proc.time()
-
-## the thing you are computing, like random forest or SVM goes here ##
-
-total.time <- proc.time() - start.time
-
-total.time[3] # the elapsed time
+#||*Model 1*|||*Model 2*|||
+#  |:------|-------:|-----:|----------:|-------:|-----:|----------:|
+#  |*Kernel*|linear|radial|polynomial|linear|radial|polynomial|
+#  |*cost*  |.001  |.001  |.001      |.001  |.001  |.001      |
+#  |*gamma* |.2    |1     |.2        |.25   |1     |.25       |
+#  |*degree*|N/A   |N/A   |2         |N/A   |N/A   |2         |
+#  |*time*  |5.4   |26.47 |25.31     |2.44  |24.84 |7.51      |
+#  |*misclassification rate*|.06|.06|.06|.06|.06|.06|
 
 ```
+
+|*Stepwise Model*       || ||
+|:------|-------:|-----:|--------:|
+|*Kernel*|linear|radial|polynomial|
+|*cost*  |.001  |.001  |.001      |
+|*gamma* |.2    |1     |.2        |
+|*degree*|N/A   |N/A   |2         |
+|*time*  |5.4   |26.47 |25.31     |
+|*misclassification rate*|.06|.06|.06|
+
+
 
 # Appendix
 
