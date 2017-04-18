@@ -970,8 +970,9 @@ varImpPlot(rf.seismic)
 total.time <- proc.time() - start.time
 time7 <- total.time[3] 
 ```
-
 # Support vector classifier and support vector machine
+
+A support vector machine allows for the classification of data with, if desired, non-linear boundaries. We attempted to fit this approach to our data, using a linear, radial, and polynomial kernel. With an increased cost (a penalty term), the time to fit the prescribed SVM increased. Thankfully, our data favored lower costs which meant quicker computation in the end. For each kernel, we searched over a list of possible inputs for cost, gamma (where applicable), and degree (where applicable). Our final results are presented below.
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
 # Variable selection and refitting
@@ -1011,12 +1012,12 @@ start.time <- proc.time()
 tune.out <- tune(svm, factor(class)~genergy + gpuls + nbumps + nbumps2 + nbumps4, data = seismic[train,], kernel = "linear", ranges = list(cost = c(.001,.01,.1,1,5)))
 
 # Look for a best model
-#summary(tune.out)
+summary(tune.out)
 bestmod <- tune.out$best.model
-#summary(bestmod)
+summary(bestmod)
 
 ypred <- predict(bestmod, seismic[-train,])
-#table(predict = ypred, truth = seismic$class[-train])
+table(predict = ypred, truth = seismic$class[-train])
 
 svmfit.best1 <- svm(factor(class)~genergy + gpuls + nbumps + nbumps2 + nbumps4, data = seismic[train,], kernel = "linear", cost = bestmod$cost, decision.values = T)
 fitted1 <- attributes(predict(svmfit.best1, seismic[train,], decision.values = T))$decision.values
@@ -1072,7 +1073,7 @@ tune.out2 <- tune(svm, factor(class)~genergy + gpuls + nbumps + nbumps2 + nbumps
 
 bestmod <- tune.out2$best.model
 ypred <- predict(bestmod, seismic[-train,])
-#table(predict = ypred, truth = seismic$class[-train])
+table(predict = ypred, truth = seismic$class[-train])
 
 svmrad2 <- svm(factor(class)~genergy + gpuls + nbumps + nbumps2 + nbumps4, data = seismic[train,], kernel = "radial", gamma = tune.out2$best.model$gamma, cost = tune.out2$best.model$cost, decision.values = T)
 fitted2 <- attributes(predict(svmrad2, seismic[train,], decision.values = T))$decision.values
@@ -1120,7 +1121,7 @@ tune.out4 <- tune(svm, factor(class)~genergy + gpuls + nbumps + nbumps2 + nbumps
 
 bestmod <- tune.out4$best.model
 ypred <- predict(bestmod, seismic[-train,])
-#table(predict = ypred, truth = seismic$class[-train])
+table(predict = ypred, truth = seismic$class[-train])
 
 svmpoly4 <- svm(factor(class)~genergy + gpuls + nbumps + nbumps2 + nbumps4, data = seismic[train,], kernel = "polynomial", cost = tune.out4$best.model$cost, degree = tune.out4$best.model$degree, decision.values = T)
 fitted4 <- attributes(predict(svmpoly4, seismic[train,], decision.values = T))$decision.values
@@ -1165,20 +1166,19 @@ time5 <- total.time[3]
 
 ```
 
-```{r, echo = F, message = F, warning = F, fig.height = 2, fig.cap = "ROC curves for SVM, where training is in blue, test in brown."}
+```{r, echo = F, message = F, warning = F, fig.height = 8, fig.width=11, fig.cap = "ROC curves for SVM on training and test data"}
 library(ROCR)
-par(mfrow = c(1,4))
-rocplot(fitted1, seismic[train,"class"], main = "ROC for Linear Kernel", col = "dark cyan")
-rocplot(fitted.test1, seismic[-train,"class"], col = "coral3")
+par(mfrow = c(2,3))
+rocplot(fitted1, seismic[train,"class"], main = "Training Data, Linear Kernel", col = "dark cyan")
+rocplot(fitted2, seismic[train,"class"], main = "Training Data, Radial Kernel", col = "dark cyan")
+rocplot(fitted4, seismic[train,"class"], main = "Training Data, Polynomial Kernel", col = "dark cyan")
 
-rocplot(fitted2, seismic[train,"class"], main = "ROC for Radial Kernel", col = "dark cyan")
-rocplot(fitted.test2, seismic[-train,"class"], col = "coral3")
 
-rocplot(fitted4, seismic[train,"class"], main = "ROC for Polynomial Kernel", col = "dark cyan")
-rocplot(fitted.test4, seismic[-train,"class"], col = "coral3")
+rocplot(fitted.test1, seismic[-train,"class"], main = "Test Data, Linear Kernel", col = "coral3")
+rocplot(fitted.test2, seismic[-train,"class"], col = "coral3", main = "Test Data, Radial Kernel")
+rocplot(fitted.test4, seismic[-train,"class"], main = "Test Data, Polynomial Kernel", col = "coral3")
 
 ```
-
 |*Stepwise Model*       || ||
 |:------|-------:|-----:|--------:|
 |*Kernel*|linear|radial|polynomial|
