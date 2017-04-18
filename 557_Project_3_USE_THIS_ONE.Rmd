@@ -740,7 +740,7 @@ start.time <- proc.time()
 ## Tune the RF: Finding optimul numbers of variables for splitting on each node
 #------------------------------------------------------------------------------
 bestmtry <- tuneRF(seismic.train[-16], seismic.train$class, ntreeTry=100, 
-     stepFactor=1.5,improve=0.01, plot=TRUE, dobest=FALSE)
+     stepFactor=1.5,improve=0.01, dobest=FALSE)
 ```
 
 Then, we applied Random Forest formula on both train and test datasets for the models derived before and after variable selection. In each cases, the number of tress we used is 1000. We also calculated the 'variable importance' in order to see relative importance of each variable in the classifcation process. 
@@ -757,7 +757,7 @@ yhat.rf.train = predict(rf.seismic, type = "prob", newdata = seismic.train)[,2]
 
 ```
 
-However, ROC curves show that predictions on test dataset are leass accurate than predictions on test dataset. 
+However, ROC curves show that predictions on test dataset are leass accurate than predictions on test dataset. We also see from the Variable importance plot, that the most important variables are nbumps2, nbumps3, genergy, nbumps4, nbumps, maxenergy, gdenergy, gpuls, and energy. Variables like shift, ghazard, nbumps5 and seismoacoustic are of less important for predicting seismic events.
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
 
@@ -771,7 +771,7 @@ plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Train ROC for RF C
 confusion <- table(yhat.rf.train, seismic.train$class)
 train.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.train)
 train.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
-train.error
+#train.error
 #train.accuracy
 
 ## RF on Test Data 
@@ -786,17 +786,10 @@ plot.roc(roc.test, col = "blue", auc.polygon = TRUE, main = "Test ROC for RF Cla
 confusion <- table(yhat.rf.test, seismic.test$class)
 test.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.test)
 test.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
-test.error
+#test.error
 #test.accuracy
-
-```
-
-We see from the Variable importance plot, that the most important variables are nbumps2, nbumps3, genergy, nbumps4, nbumps, maxenergy, gdenergy, gpuls, and energy. Variables like shift, ghazard, nbumps5 and seismoacoustic are of less important for predicting seismic events.  
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
-par(mfrow = c(1,4))
 #importance(rf.seismic)
-varImpPlot(rf.seismic)
+#varImpPlot(rf.seismic)
 ```
 
 ## RF Classification AFTER Variable Selection 
@@ -826,7 +819,7 @@ plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Model 1: Train ROC
 confusion <- table(yhat.rf.train, seismic.train$class)
 train.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.train)
 train.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
-train.error
+#train.error
 #train.accuracy
 
 ## RF on Test Data
@@ -840,16 +833,16 @@ plot.roc(roc.test, col = "blue", auc.polygon = TRUE, main = "Model 1: Test ROC f
 confusion <- table(yhat.rf.test, seismic.test$class)
 test.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.test)
 test.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
-test.error
-test.accuracy
+#test.error
+#test.accuracy
 ```
 
-According to the variable importance plot, most important varibales for predicting next seismic events seem to be nbumps and nbumps4.  
+According to the variable importance plot, most important varibales for predicting next seismic events seem to be nbumps and nbumps4. We can see from ROC curves, that train AUC is still slightly higher than test AUC. However, Model 1's test AUC (0.747) is slightly lower than the test AUC (0.776) from Model 1.   
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
 par(mfrow = c(1,4))
 #importance(rf.seismic)
-varImpPlot(rf.seismic)
+#varImpPlot(rf.seismic)
 
 #-------------------------------------- 
 ## Model 2 = seismic+shift+gpuls+nbumps
@@ -859,12 +852,9 @@ varImpPlot(rf.seismic)
 rf.seismic = randomForest(class~seismic+shift+gpuls+nbumps, data = seismic.train, mtry=2, ntree=1000, importance = TRUE)
 yhat.rf.train = predict(rf.seismic, type = "prob", newdata = seismic.train)[,2]
 roc.Train <- roc(seismic.train$class, yhat.rf.train, direction = "<")
-```
 
-We can see from ROC curves, that train AUC is still slightly higher than test AUC. However, Model 1's test AUC (0.747) is slightly lower than the test AUC (0.776) from Model 1. 
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
 par(mfrow = c(1,4))
+
 # ROC curve 
 plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Model 2: Train ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
 
@@ -872,7 +862,7 @@ plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Model 2: Train ROC
 confusion <- table(yhat.rf.train, seismic.train$class)
 train.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.train)
 train.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
-train.error
+#train.error
 #train.accuracy
 
 ## RF on Test Data
@@ -886,7 +876,7 @@ plot.roc(roc.test, col = "blue", auc.polygon = TRUE, main = "Model 2: Test ROC f
 confusion <- table(yhat.rf.test, seismic.test$class)
 test.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.test)
 test.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
-test.error
+#test.error
 #test.accuracy
 ```
 
@@ -894,7 +884,7 @@ In this case, only nbumps seems to be imoportant varibale for predicting seismic
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #importance(rf.seismic)
-varImpPlot(rf.seismic)
+#varImpPlot(rf.seismic)
 ```
 
 At this point, it is clear that across all of the trees considered in the random forests so far, number of bumps in the previous shifts are by far the most important varibales for predicting potential seismic events in future mining shift(s).  
