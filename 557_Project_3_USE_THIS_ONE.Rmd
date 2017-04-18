@@ -698,7 +698,7 @@ time9 <- total.time[3]
 
 # Random Forests Classification  
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T,results='hide'}
 
 ## Setting data again for RF classifcation, as response variable has to be converted into "categorical" 
 seismic <- read.csv("seismic.csv")
@@ -731,7 +731,7 @@ seismic.test <- seismic[test,]
 Next, we use Random Forest classification method as it yields relatively better classifcation results among all tree-based methods. As opposed to growing silngle decision tree (as in CART), random forest grows multiple trees, with having each split to consider only a subset of all predictors.Then it takes average of all trees to make final tree. In this way, random forest can reduce amount of potetial correlation between trees and thereby help reduce the variance of the final tree. 
 First, we used tuneRF function to find the optimal numbers of variables to try (mtry) splitting on at each node. We found mtry = 2 produces least out of the box (OBB) error, that means, 2 out of 15 predictors should be considered for each split. 
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T,results='hide'}
 start.time <- proc.time()
 
 #------------------------------------------------------------------------------
@@ -746,7 +746,7 @@ Then, we applied Random Forest formula on both train and test datasets for the m
 ## RF Classification BEFORE Variable Selection 
 Here we performed random forest classification on training and test datasets individually, using mtry = 2 and ntree = 1000. We found slightly lower test missclassification rate (5.7%) than train's (9.4%). 
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T,results='hide'}
 
 ## RF on Training Data 
 
@@ -763,7 +763,7 @@ par(mfrow = c(1,4))
 
 # ROC curve
 roc.Train <- roc(seismic.train$class, yhat.rf.train, direction = "<")
-plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Train ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
+plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Full model, train", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
 
 # Misclassification rate (FP+FN)/total
 confusion <- table(yhat.rf.train, seismic.train$class)
@@ -778,7 +778,7 @@ yhat.rf.test = predict(rf.seismic, type = "prob", newdata = seismic.test)[,2]
 roc.test <- roc(seismic.test$class, yhat.rf.test, direction = "<")
 
 # ROC curve 
-plot.roc(roc.test, col = "blue", auc.polygon = TRUE, main = "Test ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
+plot.roc(roc.test, col = "blue", auc.polygon = TRUE, main = "Full model, test", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
 
 # Misclassification rate (FP+FN)/total
 confusion <- table(yhat.rf.test, seismic.test$class)
@@ -788,17 +788,7 @@ test.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confu
 #test.accuracy
 #importance(rf.seismic)
 #varImpPlot(rf.seismic)
-```
 
-## RF Classification AFTER Variable Selection 
-Here we performed random forest classifcations on resulting models (e.g., Model 1 and Model 2) from variable slection procedures. 
-Model 1 =  genergy + gpuls + nbumps + nbumps2 + nbumps4
-Model 2 = seismic + shift + gpuls + nbumps
-Missclassificaion rates for Model 1 training and test datasets are 6.9% and 5.4%, respectively. This time the ROC curves revealed slightly improved test AUC. 
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
-
-par(mfrow = c(1,4))
 
 #--------------------------------------------------------
 ## Model 1 = genergy + gpuls + nbumps + nbumps2 + nbumps4
@@ -811,7 +801,7 @@ yhat.rf.train = predict(rf.seismic, type = "prob", newdata = seismic.train)[,2]
 roc.Train <- roc(seismic.train$class, yhat.rf.train, direction = "<")
 
 # ROC curve 
-plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Model 1: Train ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
+plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Stepwise model, train", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
 
 # Misclassification rate (FP+FN)/total
 confusion <- table(yhat.rf.train, seismic.train$class)
@@ -825,7 +815,7 @@ yhat.rf.test = predict(rf.seismic, type = "prob", newdata = seismic.test)[,2]
 roc.test <- roc(seismic.test$class, yhat.rf.test, direction = "<")
 
 # ROC curve 
-plot.roc(roc.test, col = "blue", auc.polygon = TRUE, main = "Model 1: Test ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
+plot.roc(roc.test, col = "blue", auc.polygon = TRUE, main = "Stepwise model, test", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
 
 # Misclassification rate (FP+FN)/total
 confusion <- table(yhat.rf.test, seismic.test$class)
@@ -835,10 +825,17 @@ test.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confu
 #test.accuracy
 ```
 
+## RF Classification AFTER Variable Selection 
+Here we performed random forest classifcations on resulting models (e.g., Model 1 and Model 2) from variable slection procedures. 
+Model 1 =  genergy + gpuls + nbumps + nbumps2 + nbumps4
+Model 2 = seismic + shift + gpuls + nbumps
+Missclassificaion rates for Model 1 training and test datasets are 6.9% and 5.4%, respectively. This time the ROC curves revealed slightly improved test AUC. 
+
+
 According to the variable importance plot, most important varibales for predicting next seismic events seem to be nbumps and nbumps4. We can see from ROC curves, that train AUC is still slightly higher than test AUC. However, Model 1's test AUC (0.747) is slightly lower than the test AUC (0.776) from Model 1.   
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
-par(mfrow = c(1,4))
+#par(mfrow = c(1,4))
 #importance(rf.seismic)
 #varImpPlot(rf.seismic)
 
@@ -847,33 +844,33 @@ par(mfrow = c(1,4))
 #--------------------------------------
 
 ## RF on Training Data
-rf.seismic = randomForest(class~seismic+shift+gpuls+nbumps, data = seismic.train, mtry=2, ntree=1000, importance = TRUE)
-yhat.rf.train = predict(rf.seismic, type = "prob", newdata = seismic.train)[,2]
-roc.Train <- roc(seismic.train$class, yhat.rf.train, direction = "<")
+#rf.seismic = randomForest(class~seismic+shift+gpuls+nbumps, data = seismic.train, mtry=2, ntree=1000, importance = TRUE)
+#yhat.rf.train = predict(rf.seismic, type = "prob", newdata = seismic.train)[,2]
+#roc.Train <- roc(seismic.train$class, yhat.rf.train, direction = "<")
 
-par(mfrow = c(1,4))
+#par(mfrow = c(1,4))
 
 # ROC curve 
-plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Model 2: Train ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
+#plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Model 2: Train ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
 
 # Misclassification rate (FP+FN)/total
-confusion <- table(yhat.rf.train, seismic.train$class)
-train.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.train)
-train.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+#confusion <- table(yhat.rf.train, seismic.train$class)
+#train.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.train)
+#train.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
 #train.error
 #train.accuracy
 
 ## RF on Test Data
-yhat.rf.test = predict(rf.seismic, type = "prob", newdata = seismic.test)[,2]
-roc.test <- roc(seismic.test$class, yhat.rf.test, direction = "<")
+#yhat.rf.test = predict(rf.seismic, type = "prob", newdata = seismic.test)[,2]
+#roc.test <- roc(seismic.test$class, yhat.rf.test, direction = "<")
 
 # ROC curve 
-plot.roc(roc.test, col = "blue", auc.polygon = TRUE, main = "Model 2: Test ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
+#plot.roc(roc.test, col = "blue", auc.polygon = TRUE, main = "Model 2: Test ROC for RF Classification", xlab = "False Positive Rate", #ylab = "True Positive Rate", print.auc = TRUE)
 
 # Misclassification rate (FP+FN)/total
-confusion <- table(yhat.rf.test, seismic.test$class)
-test.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.test)
-test.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+#confusion <- table(yhat.rf.test, seismic.test$class)
+#test.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.test)
+#test.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
 #test.error
 #test.accuracy
 ```
