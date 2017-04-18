@@ -969,14 +969,17 @@ time7
 ## Summary Table of Random Forest (RF) Classification: 
 #### Time elasped: 7.09  
 | RF on Models| Missclassification Rate| AUC|Important Variable(s) |
-|:-------------|----------------:|-----:|------------------------------------:|
+|:--------------|-----------------:|------:|-------------------------------------:|
 |Full Model (Train)| 9.4%| 0.996|nbumps2, nbumps3, genergy, nbumps4, nbumps, maxenergy, gdenergy, gpuls, and energy |
 |Full Model (Test)| 5.7%| 0.757| nbumps2, nbumps3, genergy, nbumps4, nbumps, maxenergy, gdenergy, gpuls, and energy|
 |Model 1 (Train)| 6.9%|0.997 | nbumps and nbumps4|
 |Model 1 (Test)| 5.4%| 0.776|nbumps and nbumps4 |
 |Model 2 (Train)| 5.8%| 0.983| nbumps|
 |Model 2 (Test)|6.3% | 0.747|nbumps |
-#Boosting
+
+
+
+##Boosting
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, cache=T}
 
