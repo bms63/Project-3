@@ -444,9 +444,9 @@ rownames(qda.times) <- c("Computing Time", "Train Error Rates", "Test Error Rate
 kable(qda.times, caption="Quadratic Discriminant Analysis")
 ```
 
-Multicollinearity can be address by dimension reduction techniques such as PCA,  step-wise regression, LASSO or ridge.  In project 2, we utilized step-wise regression and LASSO to arrive at two candidate models.  However, even with these dimension reduction techniques our models still performed poorly.  Hopefully, to remedy this poor performance, we can utilize more advance techniques such as Boosting, Random Forest or Support Vector Machines.  We only look at the model that was obtained through step-wise regression.  
+Quadratic discriminant analysis (QDA) provides an alternative approach to  LDA in that QDA assumes each class has its own covariance matrix. This allows the method to be more flexible in some ways, although the singularity of the covariance matrices resulting from multicollinearity prohibited us from fitting a QDA model prior to variable selection.
 
-In section 2, we report ROC curves and missclassification rates for Logistic Regression, LDA, QDA and RDA.  In section 3, we report __best technique__ out of the three that we tried.  In section 4, we provide concluding remarks as well as future work on seismic data.
+Across the board, QDA yields much higher sensitivity than prior approaches. Using Model-1 on test data, we see sensitivity of ~41.03%, specificity of ~86.82%, and an overall error rate of ~16.94%. Using Model-2, on the other hand, yields sensitivity of ~30.77%, specificity of ~93.08%, and overall error rate of ~10.68%.
 
 ## 2.4 Regularized Discriminant Analysis
 
@@ -578,9 +578,7 @@ kable(rda.times, caption="Regularized Discriminant Analysis")
 
 ```
 
-Multicollinearity can be address by dimension reduction techniques such as PCA,  step-wise regression, LASSO or ridge.  In project 2, we utilized step-wise regression and LASSO to arrive at two candidate models.  However, even with these dimension reduction techniques our models still performed poorly.  Hopefully, to remedy this poor performance, we can utilize more advance techniques such as Boosting, Random Forest or Support Vector Machines.  We only look at the model that was obtained through step-wise regression.  
-
-In section 2, we report ROC curves and missclassification rates for Logistic Regression, LDA, QDA and RDA.  In section 3, we report __best technique__ out of the three that we tried.  In section 4, we provide concluding remarks as well as future work on seismic data.
+Similar to LDA, it is reasonable to believe that each class is distributed normally with some different mean vector and covariance matrix, as seen in quadratic discriminant analysis (QDA). RDA allows for a compromise between LDA and QDA. We implemented an RDA approach. Using a classification threshhold of 0.5 yields an overall error rate of ~7.6% for the training data and ~8.2% for the test data. Poor performance on the test data might be indicative of RDA overfitting for this model.
 
 # Boosting before variable selection
 
