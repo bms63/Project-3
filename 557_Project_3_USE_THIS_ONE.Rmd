@@ -1142,20 +1142,19 @@ time5 <- total.time[3]
 
 ```
 
-```{r, echo = F, message = F, warning = F, fig.height = 2, fig.cap = "ROC curves for SVM, where training is in blue, test in brown."}
+```{r, echo = F, message = F, warning = F, fig.height = 8, fig.width=11, fig.cap = "ROC curves for SVM on training and test data"}
 library(ROCR)
-par(mfrow = c(1,4))
-rocplot(fitted1, seismic[train,"class"], main = "ROC for Linear Kernel", col = "dark cyan")
-rocplot(fitted.test1, seismic[-train,"class"], col = "coral3")
+par(mfrow = c(2,3))
+rocplot(fitted1, seismic[train,"class"], main = "Training Data, Linear Kernel", col = "dark cyan")
+rocplot(fitted2, seismic[train,"class"], main = "Training Data, Radial Kernel", col = "dark cyan")
+rocplot(fitted4, seismic[train,"class"], main = "Training Data, Polynomial Kernel", col = "dark cyan")
 
-rocplot(fitted2, seismic[train,"class"], main = "ROC for Radial Kernel", col = "dark cyan")
-rocplot(fitted.test2, seismic[-train,"class"], col = "coral3")
 
-rocplot(fitted4, seismic[train,"class"], main = "ROC for Polynomial Kernel", col = "dark cyan")
-rocplot(fitted.test4, seismic[-train,"class"], col = "coral3")
+rocplot(fitted.test1, seismic[-train,"class"], main = "Test Data, Linear Kernel", col = "coral3")
+rocplot(fitted.test2, seismic[-train,"class"], col = "coral3", main = "Test Data, Radial Kernel")
+rocplot(fitted.test4, seismic[-train,"class"], main = "Test Data, Polynomial Kernel", col = "coral3")
 
 ```
-
 |*Stepwise Model*       || ||
 |:------|-------:|-----:|--------:|
 |*Kernel*|linear|radial|polynomial|
