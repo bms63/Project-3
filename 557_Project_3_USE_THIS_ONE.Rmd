@@ -913,7 +913,7 @@ time7 <- total.time[3]
 
 A support vector machine allows for the classification of data with, if desired, non-linear boundaries. We attempted to fit this approach to our data, using a linear, radial, and polynomial kernel. With an increased cost (a penalty term), the time to fit the prescribed SVM increased. Thankfully, our data favored lower costs which meant quicker computation in the end. For each kernel, we searched over a list of possible inputs for cost, gamma (where applicable), and degree (where applicable). Our final results are presented below.
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA,results='hide', fig.height=2, cache=T}
 # Variable selection and refitting
 #model1 = genergy + gpuls + nbumps + nbumps2 + nbumps4
 #model2 = seismic + shift + gpuls + nbumps
@@ -1127,7 +1127,6 @@ rocplot(fitted.test4, seismic[-train,"class"], main = "Test Data, Polynomial Ker
 |*degree*|N/A   |N/A   |2         |
 |*time*  |5.4   |26.47 |25.31     |
 |*misclassification rate*|.06|.06|.06|
-
 # Appendix
 
 ### Table I. Attribute information of the seismic-bumps dataset
