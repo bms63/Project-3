@@ -898,10 +898,8 @@ time7 <- total.time[3]
 |:--------------|-----------------:|------:|-------------------------------------:|
 |Full Model (Train)| 9.4%| 0.996| nbumps2,3,4 , genergy, nbumps, maxenergy, gdenergy, gpuls, and energy |
 |Full Model (Test)| 5.7%| 0.757| nbumps2,3,4 , genergy, nbumps, maxenergy, gdenergy, gpuls, and energy|
-|Model 1 (Train)| 6.9%|0.997 | nbumps and nbumps4|
-|Model 1 (Test)| 5.4%| 0.776|nbumps and nbumps4 |
-|Model 2 (Train)| 5.8%| 0.983| nbumps|
-|Model 2 (Test)|6.3% | 0.747|nbumps |
+|Stepwise model (Train)| 6.9%|0.997 | nbumps and nbumps4|
+|Stepwise model (Test)| 5.4%| 0.776|nbumps and nbumps4 |
 
 
 # Support vector classifier and support vector machine
