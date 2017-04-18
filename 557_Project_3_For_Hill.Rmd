@@ -7,9 +7,9 @@ output: pdf_document
 
 # Introduction  
  
-Mining activity has long been associated with mining hazards, such as fires, floods, and toxic contaminants (Dozolme, P., 2016). Among these hazards, seismic hazards are the hardest to detect and predict (Sikora & Wróbel, 2010). Minimizing loss from seismic hazards requires advanced data collection and analysis. In recent years, more and more advanced seismic and seismoacoustic monitoring systems have come about. Still, the disproportionate number of low-energy versus high-energy seismic phenomena (e.g. > $10^4$J) renders traditional analysis methods insufficient in making accurate predictions.
+Mining activity has long been associated with mining hazards, such as fires, floods, and toxic contaminants (Dozolme, P., 2016). Among these hazards, seismic hazards are the hardest to detect and predict (Sikora & WrÃ³bel, 2010). Minimizing loss from seismic hazards requires advanced data collection and analysis. In recent years, more and more advanced seismic and seismoacoustic monitoring systems have come about. Still, the disproportionate number of low-energy versus high-energy seismic phenomena (e.g. > $10^4$J) renders traditional analysis methods insufficient in making accurate predictions.
 
-To investigate these seismic hazards and explore more advance analysis technique we used the seismic-bumps dataset provided by Sikora & Wróbel (2010), found in the UCI Machine Learning Repository. This seismic-bumps dataset comes from a coal mine located in Poland and contains 2584 observations of 19 attributes. Each observation summarizes seismic activity in the rock mass within one 8-hour shift. Note that the decision attribute, named "class", has values 1 and 0. This variable is the response variable we use in this project. A class value of "1" is categorized as "hazardous state", which essentially indicates a registered seismic bump with high energy (>$10^4$J) in the next shift. A class value "0" represents non-hazardous state in the next shift.  Table 1 in the Appendix has a listing of all 18 variables and their descriptions. 
+To investigate these seismic hazards and explore more advance analysis technique we used the seismic-bumps dataset provided by Sikora & WrÃ³bel (2010), found in the UCI Machine Learning Repository. This seismic-bumps dataset comes from a coal mine located in Poland and contains 2584 observations of 19 attributes. Each observation summarizes seismic activity in the rock mass within one 8-hour shift. Note that the decision attribute, named "class", has values 1 and 0. This variable is the response variable we use in this project. A class value of "1" is categorized as "hazardous state", which essentially indicates a registered seismic bump with high energy (>$10^4$J) in the next shift. A class value "0" represents non-hazardous state in the next shift.  Table 1 in the Appendix has a listing of all 18 variables and their descriptions. 
 
 The purpose of this project is to find whether and how the other 18 variables can be used to determine the hazard status of the mine.  In project 2, we utlized techniques such as the indicator matrix linear regression, logistic regression, linear discriminant analysis(LDA), quadratic discriminant qnalysis (QDA), and regularized discriminant analysis (RDA) to try and find a model that would accurately predict the hazardous state.  Unfortunately, all of the five project two methods performed poorly.  We felt that there were two major issues at hand for this poor performance of the five methods. First, the low incidences of "1's" in the response variable class, which indicates a hazardous state in the mine.  Only 170 "1's" for class out of 2584 were observed.  A difficult problem for traditional method of analyses. The second issue was multicollinearity. Regression diagnostics indicate that the data, in general, meet most assumptions. However, we see that that data are somewhat skewed right, and there is severe multicollinearity (VIF > 10) between some of the covariates.  Table 2 in the Appendix contains VIF's for the linear regression model.  
 
@@ -20,7 +20,7 @@ In section 2, we report ROC curves and missclassification rates for Logistic Reg
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Configuring Space
-rm(list=ls())
+#rm(list=ls())
 
 # Loading packages into R
 #install.packages("e1071")
@@ -28,7 +28,7 @@ library(data.table);library(car);library(lars);library(knitr);library(ISLR);libr
 
 #setwd("~/Box Sync/Skool/Spring 2017/557/Project-2-master")
 #setwd("F:/Penn_State/Spring2017/STAT557/Workspace")
-setwd("/Users/benStraub/Desktop/557/Project-3")
+#setwd("/Users/benStraub/Desktop/557/Project-3")
 seismic <- read.csv("seismic.csv")
 ```
 
@@ -580,12 +580,12 @@ kable(rda.times, caption="Regularized Discriminant Analysis")
 
 Similar to LDA, it is reasonable to believe that each class is distributed normally with some different mean vector and covariance matrix, as seen in quadratic discriminant analysis (QDA). RDA allows for a compromise between LDA and QDA. We implemented an RDA approach. Using a classification threshhold of 0.5 yields an overall error rate of ~7.6% for the training data and ~8.2% for the test data. Poor performance on the test data might be indicative of RDA overfitting for this model.
 
-# Boosting before variable selection
+# Boosting using full model
 
 Next we performed boosting to our dataset and see whether it brings improvement compared to previous methods. Boosting  involves combining a large number of decision trees. In boosting, we slowly grow the tree according to residuals from the model. The construction of each tree depends strongly on the trees that have already been grown. (James et al., 2013)
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
-
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T, results = 'hide'}
+library(gbm)
 #run boosting
 start.time <- proc.time()
 
@@ -608,7 +608,7 @@ yhat.boost.train.round=round(yhat.boost.train)
 roc.Train <- roc(seismic.train$class, yhat.boost.train, direction = "<")
 
 par(mfrow = c(1,2))
-plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Train ROC for Boosting", xlab = "False Positive Rate", ylab = "True Positive Rate",print.auc = TRUE)
+plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Train data, full model", xlab = "False Positive Rate", ylab = "True Positive Rate",print.auc = TRUE)
 
 ## on test dataset
 
@@ -623,8 +623,8 @@ yhat.boost.test.round=round(yhat.boost.test)
 #roc curve on test dataset
 
 roc.Test<- roc(seismic.test$class, yhat.boost.test, direction = "<")
-par(mfrow = c(1,2))
-plot.roc(roc.Test, col = "blue", auc.polygon = TRUE, main = "Test ROC for Boosting ", xlab = "False Positive Rate", ylab = "True Positive Rate",print.auc = TRUE)
+
+plot.roc(roc.Test, col = "blue", auc.polygon = TRUE, main = "Test data, full model", xlab = "False Positive Rate", ylab = "True Positive Rate",print.auc = TRUE)
 
 
 # Misclassification rate (FP+FN)/total 
@@ -636,20 +636,17 @@ total.time <- proc.time() - start.time
 time8 <- total.time[3] 
 #time8
 
-
-
-
-
-
 ```
-We also did boosting on model 1 (from stepwise variable selection). But the original model performs best as for classification rate (shown in the table below). Therefore, we only keep the original model.
+
+We also did boosting on model 1 (from stepwise variable selection), but the original model performs best, when evaluating by misclassification rate (shown in the table below). Therefore, in the interest of space, we only report the original model.
+
 |*Boosting*       || ||
 |:------|-------:|-----:|
-|*model*|orignal|Model1|
+|*model*|Full model|Stepwise model|
 |*time*  |10.38   |5.64|
 |*misclassification rate*|.057|.060|
 
-# Random Forests Classification  
+# Random Forest Classification
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T,results='hide'}
 
@@ -681,26 +678,27 @@ seismic.test <- seismic[test,]
 
 ```
 
-Next, we use Random Forest classification method as it yields relatively better classifcation results among all tree-based methods. As opposed to growing silngle decision tree (as in CART), random forest grows multiple trees, with having each split to consider only a subset of all predictors.Then it takes average of all trees to make final tree. In this way, random forest can reduce amount of potetial correlation between trees and thereby help reduce the variance of the final tree. 
+Next, we use Random Forest classification method as it yields relatively better classifcation results among all tree-based methods. As opposed to growing a single decision tree (as in CART), random forest grows multiple trees, with having each split to consider only a subset of all predictors.Then it takes average of all trees to make final tree. In this way, random forest can reduce amount of potetial correlation between trees and thereby help reduce the variance of the final tree. 
 First, we used tuneRF function to find the optimal numbers of variables to try (mtry) splitting on at each node. We found mtry = 2 produces least out of the box (OBB) error, that means, 2 out of 15 predictors should be considered for each split. 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T,results='hide'}
+library(randomForest)
 start.time <- proc.time()
 
 #------------------------------------------------------------------------------
 ## Tune the RF: Finding optimul numbers of variables for splitting on each node
 #------------------------------------------------------------------------------
 bestmtry <- tuneRF(seismic.train[-16], seismic.train$class, ntreeTry=100, 
-     stepFactor=1.5,improve=0.01, dobest=FALSE)
+     stepFactor=1.5,improve=0.01, dobest=FALSE, plot = F)
 ```
 
 Then, we applied Random Forest formula on both train and test datasets for the models derived before and after variable selection. In each cases, the number of tress we used is 1000. We also calculated the 'variable importance' in order to see relative importance of each variable in the classifcation process. 
 
-## RF Classification BEFORE Variable Selection 
+## Random forest on full model
 Here we performed random forest classification on training and test datasets individually, using mtry = 2 and ntree = 1000. We found slightly lower test missclassification rate (5.7%) than train's (9.4%). 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T,results='hide'}
-
+library(randomForest)
 ## RF on Training Data 
 
 rf.seismic = randomForest(class~., data = seismic.train, mtry=2, ntree=1000, importance = TRUE)
@@ -711,7 +709,7 @@ yhat.rf.train = predict(rf.seismic, type = "prob", newdata = seismic.train)[,2]
 However, ROC curves show that predictions on test dataset are leass accurate than predictions on test dataset. We also see from the Variable importance plot, that the most important variables are nbumps2, nbumps3, genergy, nbumps4, nbumps, maxenergy, gdenergy, gpuls, and energy. Variables like shift, ghazard, nbumps5 and seismoacoustic are of less important for predicting seismic events.
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
-
+library(randomForest)
 par(mfrow = c(1,4))
 
 # ROC curve
@@ -778,7 +776,7 @@ test.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confu
 #test.accuracy
 ```
 
-## RF Classification AFTER Variable Selection 
+## Random forest on stepwise model 
 Here we performed random forest classifcations on resulting model from stepwise variable slection. 
 Stepwise Model =  genergy + gpuls + nbumps + nbumps2 + nbumps4
 Missclassificaion rates for stepwise model's training and test datasets are 6.9% and 5.4%, respectively. This time the ROC curves revealed slightly improved test AUC. 
@@ -837,7 +835,7 @@ time7 <- total.time[3]
 #time7
 ```
 
-## Summary Table of Random Forest (RF) Classification: 
+
 #### Time elasped: 7.09  
 | RF on Models| Missclassification Rate| AUC|Important Variable(s) |
 |:--------------|-----------------:|------:|-------------------------------------:|
@@ -1043,7 +1041,7 @@ time5 <- total.time[3]
 
 ```
 
-```{r, echo = F, message = F, warning = F, fig.height = 8, fig.width=11, fig.cap = "ROC curves for SVM on training and test data"}
+```{r, echo = F, message = F, warning = F, fig.height = 8, fig.width=11}
 library(ROCR)
 par(mfrow = c(2,3))
 rocplot(fitted1, seismic[train,"class"], main = "Training Data, Linear Kernel", col = "dark cyan")
@@ -1091,7 +1089,7 @@ rocplot(fitted.test4, seismic[-train,"class"], main = "Test Data, Polynomial Ker
 ## Some quick EDA from Hillary
 ##---------------------------------------------
 
-setwd("/Users/benStraub/Desktop/557/Project-3")
+#setwd("/Users/benStraub/Desktop/557/Project-3")
 seismic <- read.csv("seismic.csv")
 par(mfrow=c(1,2))
 
