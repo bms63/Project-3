@@ -571,6 +571,8 @@ kable(rda.times, caption="Regularized Discriminant Analysis")
 ```
 # Boosting before variable selection
 
+Next we performed boosting to our dataset and see whether it brings improvement compared to previous methods. Boosting  involves combining a large number of decision trees. In boosting, we slowly grow the tree according to residuals from the model. The construction of each tree depends strongly on the trees that have already been grown. (James et al., 2013)
+
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
 
 #run boosting
