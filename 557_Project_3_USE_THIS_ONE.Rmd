@@ -797,110 +797,119 @@ test <- sample(n, round(n/4))
 train <- (1:n)[-test]
 seismic.train <- seismic[train,]
 seismic.test <- seismic[test,]
-```
 
-## RF Classification BEFORE Variable Selection 
+```
+Next, we use Random Forest classification method as it yields relatively better classifcation results among all tree-based methods. As opposed to growing silngle decision tree (as in CART), random forest grows multiple trees, with having each split to consider only a subset of all predictors.Then it takes average of all trees to make final tree. In this way, random forest can reduce amount of potetial correlation between trees and thereby help reduce the variance of the final tree. 
+First, we used tuneRF function to find the optimal numbers of variables to try (mtry) splitting on at each node. We found mtry = 2 produces least out of the box (OBB) error, that means, 2 out of 15 predictors should be considered for each split. 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, cache=T}
-
 start.time <- proc.time()
+
 #------------------------------------------------------------------------------
 ## Tune the RF: Finding optimul numbers of variables for splitting on each node
 #------------------------------------------------------------------------------
 bestmtry <- tuneRF(seismic.train[-16], seismic.train$class, ntreeTry=100, 
-     stepFactor=1.5,improve=0.01, trace=TRUE, plot=TRUE, dobest=FALSE)
+     stepFactor=1.5,improve=0.01, plot=TRUE, dobest=FALSE)
+```
+Then, we applied Random Forest formula on both train and test datasets for the models derived before and after variable selection. In each cases, the number of tress we used is 1000. We also calculated the 'variable importance' in order to see relative importance of each variable in the classifcation process. 
+
+## RF Classification BEFORE Variable Selection 
+Here we performed random forest classification on training and test datasets individually, using mtry = 2 and ntree = 1000. We found slightly lower test missclassification rate (5.7%) than train's (9.4%). 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 
 ## RF on Training Data 
 
 rf.seismic = randomForest(class~., data = seismic.train, mtry=2, ntree=1000, importance = TRUE)
 yhat.rf.train = predict(rf.seismic, type = "prob", newdata = seismic.train)[,2]
 
+```
+However, ROC curves show that predictions on test dataset are leass accurate than predictions on test dataset. 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
+
+# ROC curve
 roc.Train <- roc(seismic.train$class, yhat.rf.train, direction = "<")
-par(mfrow = c(1,2))
 plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Train ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
 
-#rf.pred = prediction(yhat.rf.train, seismic.train$class)
-#rf.perf = performance(rf.pred,"tpr","fpr")
-#par(mfrow = c(1,2))
-#plot(rf.perf, main="ROC Curve for Random Forest", print.auc=TRUE, col=2, lwd=2)
-#abline(a=0,b=1,lwd=2,lty=2,col="gray", print.auc=TRUE)
-
-#<<<<<<< HEAD
-#=======
-#------------------------------------------------------------------------------
-## Tune the RF: Finding optimul numbers of variables for splitting on each node
-#------------------------------------------------------------------------------
-bestmtry <- tuneRF(seismic.train[-16], seismic.train$class, ntreeTry=100, 
-     stepFactor=1.5,improve=0.01, trace=TRUE, plot=TRUE, dobest=FALSE)
-
-## RF on Training Data 
-
-rf.seismic = randomForest(class~., data = seismic.train, mtry=2, ntree=1000, importance = TRUE)
-yhat.rf.train = predict(rf.seismic, type = "prob", newdata = seismic.train)[,2]
-
-roc.Train <- roc(seismic.train$class, yhat.rf.train, direction = "<")
-par(mfrow = c(1,2))
-plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Train ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
-
-#rf.pred = prediction(yhat.rf.train, seismic.train$class)
-#rf.perf = performance(rf.pred,"tpr","fpr")
-#par(mfrow = c(1,2))
-#plot(rf.perf, main="ROC Curve for Random Forest", print.auc=TRUE, col=2, lwd=2)
-#abline(a=0,b=1,lwd=2,lty=2,col="gray", print.auc=TRUE)
-
+# Misclassification rate (FP+FN)/total
 confusion <- table(yhat.rf.train, seismic.train$class)
-sensitivity <- confusion[2,2]/sum(confusion[,2])
-specificity <- confusion[1,1]/sum(confusion[,1])
-#mean((yhat.rf.train - seismic.train$class)^2)
-sensitivity
-specificity
 train.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.train)
-train.accuracy
+train.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+train.error
+#train.accuracy
 
 ## RF on Test Data 
 
 yhat.rf.test = predict(rf.seismic, type = "prob", newdata = seismic.test)[,2]
 roc.test <- roc(seismic.test$class, yhat.rf.test, direction = "<")
-par(mfrow = c(1,2))
+
+# ROC curve 
 plot.roc(roc.test, col = "blue", auc.polygon = TRUE, main = "Test ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
 
+# Misclassification rate (FP+FN)/total
 confusion <- table(yhat.rf.test, seismic.test$class)
-sensitivity <- confusion[2,2]/sum(confusion[,2])
-specificity <- confusion[1,1]/sum(confusion[,1])
-#mean((yhat.rf.test - seismic.test$class)^2)
-sensitivity
-specificity
 test.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.test)
-test.accuracy
+test.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+test.error
+#test.accuracy
 
-importance(rf.seismic)
+```
+We see from the Variable importance plot, that the most important variables are nbumps2, nbumps3, genergy, nbumps4, nbumps, maxenergy, gdenergy, gpuls, and energy. Variables like shift, ghazard, nbumps5 and seismoacoustic are of less important for predicting seismic events.  
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
+
+#importance(rf.seismic)
 varImpPlot(rf.seismic)
-
 ```
 
 ## RF Classification AFTER Variable Selection 
+Here we performed random forest classifcations on resulting models (e.g., Model 1 and Model 2) from variable slection procedures. 
+Model 1 =  genergy + gpuls + nbumps + nbumps2 + nbumps4
+Model 2 = seismic + shift + gpuls + nbumps
+Missclassificaion rates for Model 1 training and test datasets are 6.9% and 5.4%, respectively. This time the ROC curves revealed slightly improved test AUC. 
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, cache=T}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 
 #--------------------------------------------------------
 ## Model 1 = genergy + gpuls + nbumps + nbumps2 + nbumps4
 #--------------------------------------------------------
 
 ## RF on Training Data
+
 rf.seismic = randomForest(class~genergy + gpuls + nbumps + nbumps2 + nbumps4, data = seismic.train, mtry=2, ntree=1000, importance = TRUE)
 yhat.rf.train = predict(rf.seismic, type = "prob", newdata = seismic.train)[,2]
 roc.Train <- roc(seismic.train$class, yhat.rf.train, direction = "<")
-par(mfrow = c(1,2))
+
+# ROC curve 
 plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Model 1: Train ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
 
+# Misclassification rate (FP+FN)/total
+confusion <- table(yhat.rf.train, seismic.train$class)
+train.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.train)
+train.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+train.error
+#train.accuracy
 
 ## RF on Test Data
 yhat.rf.test = predict(rf.seismic, type = "prob", newdata = seismic.test)[,2]
 roc.test <- roc(seismic.test$class, yhat.rf.test, direction = "<")
-par(mfrow = c(1,2))
+
+# ROC curve 
 plot.roc(roc.test, col = "blue", auc.polygon = TRUE, main = "Model 1: Test ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
 
-importance(rf.seismic)
+# Misclassification rate (FP+FN)/total
+confusion <- table(yhat.rf.test, seismic.test$class)
+test.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.test)
+test.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+test.error
+test.accuracy
+```
+According to the variable importance plot, most important varibales for predicting next seismic events seem to be nbumps and nbumps4.  
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
+
+#importance(rf.seismic)
 varImpPlot(rf.seismic)
 
 #-------------------------------------- 
@@ -911,24 +920,62 @@ varImpPlot(rf.seismic)
 rf.seismic = randomForest(class~seismic+shift+gpuls+nbumps, data = seismic.train, mtry=2, ntree=1000, importance = TRUE)
 yhat.rf.train = predict(rf.seismic, type = "prob", newdata = seismic.train)[,2]
 roc.Train <- roc(seismic.train$class, yhat.rf.train, direction = "<")
-par(mfrow = c(1,2))
+```
+We can see from ROC curves, that train AUC is still slightly higher than test AUC. However, Model 1's test AUC (0.747) is slightly lower than the test AUC (0.776) from Model 1. 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
+
+# ROC curve 
 plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Model 2: Train ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
 
+# Misclassification rate (FP+FN)/total
+confusion <- table(yhat.rf.train, seismic.train$class)
+train.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.train)
+train.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+train.error
+#train.accuracy
 
 ## RF on Test Data
 yhat.rf.test = predict(rf.seismic, type = "prob", newdata = seismic.test)[,2]
 roc.test <- roc(seismic.test$class, yhat.rf.test, direction = "<")
-par(mfrow = c(1,2))
+
+# ROC curve 
 plot.roc(roc.test, col = "blue", auc.polygon = TRUE, main = "Model 2: Test ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
 
-importance(rf.seismic)
-varImpPlot(rf.seismic)
+# Misclassification rate (FP+FN)/total
+confusion <- table(yhat.rf.test, seismic.test$class)
+test.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.test)
+test.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
+test.error
+#test.accuracy
+```
+In this case, only nbumps seems to be imoportant varibale for predicting seismic events in the next shift.  
 
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
+
+
+#importance(rf.seismic)
+varImpPlot(rf.seismic)
+```
+At this point, it is clear that across all of the trees considered in the random forests so far, number of bumps in the previous shifts are by far the most important varibales for predicting potential seismic events in future mining shift(s).  
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 
 total.time <- proc.time() - start.time
 time7 <- total.time[3] 
+time7
 ```
-
+## Summary Table of Random Forest (RF) Classification: 
+#### Time elasped: 7.09  
+| RF on Models| Missclassification Rate| AUC|Important Variable(s) |
+|:-------------|----------------:|-----:|------------------------------------:|
+|Full Model (Train)| 9.4%| 0.996|nbumps2, nbumps3, genergy, nbumps4, nbumps, maxenergy, gdenergy, gpuls, and energy |
+|Full Model (Test)| 5.7%| 0.757| nbumps2, nbumps3, genergy, nbumps4, nbumps, maxenergy, gdenergy, gpuls, and energy|
+|Model 1 (Train)| 6.9%|0.997 | nbumps and nbumps4|
+|Model 1 (Test)| 5.4%| 0.776|nbumps and nbumps4 |
+|Model 2 (Train)| 5.8%| 0.983| nbumps|
+|Model 2 (Test)|6.3% | 0.747|nbumps |
 #Boosting
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, cache=T}
