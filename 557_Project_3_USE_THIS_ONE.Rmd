@@ -172,9 +172,7 @@ rownames(log.reg) <- c("Computing Time", "Train Error Rates", "Test Error Rates"
 kable(log.reg, caption="Logistic Regression")
 ```
 
-Multicollinearity can be address by dimension reduction techniques such as PCA,  step-wise regression, LASSO or ridge.  In project 2, we utilized step-wise regression and LASSO to arrive at two candidate models.  However, even with these dimension reduction techniques our models still performed poorly.  Hopefully, to remedy this poor performance, we can utilize more advance techniques such as Boosting, Random Forest or Support Vector Machines.  We only look at the model that was obtained through step-wise regression.  
-
-In section 2, we report ROC curves and missclassification rates for Logistic Regression, LDA, QDA and RDA.  In section 3, we report __best technique__ out of the three that we tried.  In section 4, we provide concluding remarks as well as future work on seismic data.
+We then  fit a logistic regression model to predict the response using all the predictors in the training dataset. Initially, we used a threshhold probability of 0.5 to classify into state 0 or 1. This yields an overall error rate of ~6.7% for the training data and 6.5% for the dest data, with minimal improvement in sensitivity. The ROC curve for this model indicates that it is still not a great fit for the data.
 
 ## 2.2 Linear Discriminant Analysis
 
@@ -302,9 +300,7 @@ rownames(lda.times) <- c("Computing Time", "Train Error Rates", "Test Error Rate
 kable(lda.times, caption="Linear Discriminant Analysis")
 ```
 
-Multicollinearity can be address by dimension reduction techniques such as PCA,  step-wise regression, LASSO or ridge.  In project 2, we utilized step-wise regression and LASSO to arrive at two candidate models.  However, even with these dimension reduction techniques our models still performed poorly.  Hopefully, to remedy this poor performance, we can utilize more advance techniques such as Boosting, Random Forest or Support Vector Machines.  We only look at the model that was obtained through step-wise regression.  
-
-In section 2, we report ROC curves and missclassification rates for Logistic Regression, LDA, QDA and RDA.  In section 3, we report __best technique__ out of the three that we tried.  In section 4, we provide concluding remarks as well as future work on seismic data.
+It is reasonable to believe that each class is distributed normally with some different mean vector. Thus, we implemented an LDA approach. Using a classification threshhold of 0.5 yields an overall error rate of ~7.4% for the training data and ~7.7% for the test data, but with much higher sensitivity than in the previous models. The group means suggest that a mining shift with a higher number of seismic bumps and associated higher released energy (measured in Joules) is correlated with hazard status of the mine in the subsequent shift.
 
 ## 2.3 Quadratic Discriminant Analysis
 
@@ -847,6 +843,7 @@ test.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confu
 test.error
 test.accuracy
 ```
+
 According to the variable importance plot, most important varibales for predicting next seismic events seem to be nbumps and nbumps4.  
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
@@ -863,6 +860,7 @@ rf.seismic = randomForest(class~seismic+shift+gpuls+nbumps, data = seismic.train
 yhat.rf.train = predict(rf.seismic, type = "prob", newdata = seismic.train)[,2]
 roc.Train <- roc(seismic.train$class, yhat.rf.train, direction = "<")
 ```
+
 We can see from ROC curves, that train AUC is still slightly higher than test AUC. However, Model 1's test AUC (0.747) is slightly lower than the test AUC (0.776) from Model 1. 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
@@ -891,12 +889,14 @@ test.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confu
 test.error
 #test.accuracy
 ```
+
 In this case, only nbumps seems to be imoportant varibale for predicting seismic events in the next shift.  
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
 #importance(rf.seismic)
 varImpPlot(rf.seismic)
 ```
+
 At this point, it is clear that across all of the trees considered in the random forests so far, number of bumps in the previous shifts are by far the most important varibales for predicting potential seismic events in future mining shift(s).  
 
 
@@ -918,58 +918,7 @@ time7 <- total.time[3]
 |Model 2 (Train)| 5.8%| 0.983| nbumps|
 |Model 2 (Test)|6.3% | 0.747|nbumps |
 
-##Boosting
 
-Not sure what this is doing ??
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, cache=F}
-
-#--------------------------------------------------------
-## Model 1 = genergy + gpuls + nbumps + nbumps2 + nbumps4
-#--------------------------------------------------------
-
-## RF on Training Data
-rf.seismic = randomForest(class~genergy + gpuls + nbumps + nbumps2 + nbumps4, data = seismic.train, mtry=2, ntree=1000, importance = TRUE)
-yhat.rf.train = predict(rf.seismic, type = "prob", newdata = seismic.train)[,2]
-roc.Train <- roc(seismic.train$class, yhat.rf.train, direction = "<")
-par(mfrow = c(1,2))
-plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Model 1: Train ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
-
-
-## RF on Test Data
-yhat.rf.test = predict(rf.seismic, type = "prob", newdata = seismic.test)[,2]
-roc.test <- roc(seismic.test$class, yhat.rf.test, direction = "<")
-par(mfrow = c(1,2))
-plot.roc(roc.test, col = "blue", auc.polygon = TRUE, main = "Model 1: Test ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
-
-importance(rf.seismic)
-varImpPlot(rf.seismic)
-
-#-------------------------------------- 
-## Model 2 = seismic+shift+gpuls+nbumps
-#--------------------------------------
-
-## RF on Training Data
-rf.seismic = randomForest(class~seismic+shift+gpuls+nbumps, data = seismic.train, mtry=2, ntree=1000, importance = TRUE)
-yhat.rf.train = predict(rf.seismic, type = "prob", newdata = seismic.train)[,2]
-roc.Train <- roc(seismic.train$class, yhat.rf.train, direction = "<")
-par(mfrow = c(1,2))
-plot.roc(roc.Train, col = "blue", auc.polygon = TRUE, main = "Model 2: Train ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
-
-
-## RF on Test Data
-yhat.rf.test = predict(rf.seismic, type = "prob", newdata = seismic.test)[,2]
-roc.test <- roc(seismic.test$class, yhat.rf.test, direction = "<")
-par(mfrow = c(1,2))
-plot.roc(roc.test, col = "blue", auc.polygon = TRUE, main = "Model 2: Test ROC for RF Classification", xlab = "False Positive Rate", ylab = "True Positive Rate", print.auc = TRUE)
-
-importance(rf.seismic)
-varImpPlot(rf.seismic)
-
-
-total.time <- proc.time() - start.time
-time7 <- total.time[3] 
-```
 # Support vector classifier and support vector machine
 
 A support vector machine allows for the classification of data with, if desired, non-linear boundaries. We attempted to fit this approach to our data, using a linear, radial, and polynomial kernel. With an increased cost (a penalty term), the time to fit the prescribed SVM increased. Thankfully, our data favored lower costs which meant quicker computation in the end. For each kernel, we searched over a list of possible inputs for cost, gamma (where applicable), and degree (where applicable). Our final results are presented below.
@@ -1179,6 +1128,7 @@ rocplot(fitted.test2, seismic[-train,"class"], col = "coral3", main = "Test Data
 rocplot(fitted.test4, seismic[-train,"class"], main = "Test Data, Polynomial Kernel", col = "coral3")
 
 ```
+
 |*Stepwise Model*       || ||
 |:------|-------:|-----:|--------:|
 |*Kernel*|linear|radial|polynomial|
