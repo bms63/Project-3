@@ -698,7 +698,6 @@ Then, we applied Random Forest formula on both train and test datasets for the m
 Here we performed random forest classification on training and test datasets individually, using mtry = 2 and ntree = 1000. We found slightly lower test missclassification rate (5.7%) than train's (9.4%). 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T,results='hide'}
-library(randomForest)
 ## RF on Training Data 
 
 rf.seismic = randomForest(class~., data = seismic.train, mtry=2, ntree=1000, importance = TRUE)
@@ -709,7 +708,6 @@ yhat.rf.train = predict(rf.seismic, type = "prob", newdata = seismic.train)[,2]
 However, ROC curves show that predictions on test dataset are leass accurate than predictions on test dataset. We also see from the Variable importance plot, that the most important variables are nbumps2, nbumps3, genergy, nbumps4, nbumps, maxenergy, gdenergy, gpuls, and energy. Variables like shift, ghazard, nbumps5 and seismoacoustic are of less important for predicting seismic events.
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.height=2, cache=T}
-library(randomForest)
 par(mfrow = c(1,4))
 
 # ROC curve
@@ -740,12 +738,17 @@ test.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confu
 #importance(rf.seismic)
 #varImpPlot(rf.seismic)
 
+total.time <- proc.time() - start.time
+time7 <- total.time[3] 
+#time7
 
 #--------------------------------------------------------
 ## Stepwise Model = genergy + gpuls + nbumps + nbumps2 + nbumps4
 #--------------------------------------------------------
 
 ## RF on Training Data
+
+start.time <- proc.time()
 
 rf.seismic = randomForest(class~genergy + gpuls + nbumps + nbumps2 + nbumps4, data = seismic.train, mtry=2, ntree=1000, importance = TRUE)
 yhat.rf.train = predict(rf.seismic, type = "prob", newdata = seismic.train)[,2]
@@ -774,6 +777,11 @@ test.accuracy = (confusion[1,1]+confusion[2,2])/nrow(seismic.test)
 test.error = round((confusion[2,1]+confusion[1,2])/(sum(confusion[,1])+sum(confusion[,2])),3)
 #test.error
 #test.accuracy
+
+total.time <- proc.time() - start.time
+time8 <- total.time[3] 
+#time8
+
 ```
 
 ## Random forest on stepwise model 
@@ -827,16 +835,8 @@ According to the variable importance plot, most important varibales for predicti
 
 At this point, it is clear that across all of the trees considered in the random forests so far, number of bumps in the previous shifts are by far the most important varibales for predicting potential seismic events in future mining shift(s).  
 
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA}
-
-total.time <- proc.time() - start.time
-time7 <- total.time[3] 
-#time7
-```
-
-
-#### Time elasped: 7.09  
+#### Time elasped on Full Model: 5.09  
+#### Time elasped on Stepwise Model: 1.90
 | RF on Models| Missclassification Rate| AUC|Important Variable(s) |
 |:--------------|-----------------:|------:|-------------------------------------:|
 |Full Model (Train)| 9.4%| 0.996| nbumps2,3,4 , genergy, nbumps, maxenergy, gdenergy, gpuls, and energy |
